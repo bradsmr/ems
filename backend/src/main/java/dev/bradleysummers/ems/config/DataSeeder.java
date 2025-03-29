@@ -7,6 +7,7 @@ import dev.bradleysummers.ems.repository.DepartmentRepository;
 import dev.bradleysummers.ems.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,6 +16,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private final DepartmentRepository departmentRepository;
     private final EmployeeRepository employeeRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
@@ -36,7 +38,7 @@ public class DataSeeder implements CommandLineRunner {
 
             Employee admin = Employee.builder()
                     .email("admin@company.com")
-                    .password("password")
+                    .password(passwordEncoder.encode("password"))
                     .role(Role.ADMIN)
                     .firstName("Admin")
                     .lastName("User")
