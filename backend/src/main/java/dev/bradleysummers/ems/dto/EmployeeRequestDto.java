@@ -11,6 +11,10 @@ public class EmployeeRequestDto {
     private Role role;
     private String firstName;
     private String lastName;
-    private Long departmentId;
+    private DepartmentDto department;
     private Long managerId;
+
+    public Long getDepartmentId() {
+        return department.getId();
+    }
 }

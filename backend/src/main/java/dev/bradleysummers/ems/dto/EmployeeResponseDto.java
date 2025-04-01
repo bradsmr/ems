@@ -13,6 +13,10 @@ public class EmployeeResponseDto {
     private String lastName;
     private String createdAt;
     private String updatedAt;
-    private Long departmentId;
+    private DepartmentDto department;
     private Long managerId;
+
+    public void setDepartmentId(Long aLong) {
+        this.department = null;
+    }
 }
