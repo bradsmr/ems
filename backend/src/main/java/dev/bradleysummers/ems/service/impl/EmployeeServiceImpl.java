@@ -1,13 +1,17 @@
 package dev.bradleysummers.ems.service.impl;
 
 import dev.bradleysummers.ems.entity.Employee;
+import dev.bradleysummers.ems.enums.Role;
 import dev.bradleysummers.ems.repository.EmployeeRepository;
 import dev.bradleysummers.ems.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +32,18 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<Employee> findAll() {
-        return employeeRepository.findAll();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Employee currentUser = employeeRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        if (currentUser.getRole() == Role.ADMIN) {
+            return employeeRepository.findAll();
+        } else {
+            // Regular employees can only see themselves and their manager
+            return employeeRepository.findAll().stream()
+                    .filter(emp -> emp.equals(currentUser) || emp.equals(currentUser.getManager()))
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override

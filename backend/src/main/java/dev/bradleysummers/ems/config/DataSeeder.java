@@ -59,6 +59,20 @@ public class DataSeeder implements CommandLineRunner {
                     ))
                     .toList();
 
+            // Create a standard test user
+            employeeRepository.save(
+                    Employee.builder()
+                            .email("user@company.com")
+                            .password(passwordEncoder.encode("password"))
+                            .firstName("Standard")
+                            .lastName("User")
+                            .active(true)
+                            .role(Role.EMPLOYEE)
+                            .department(engineering)
+                            .manager(managers.get(0)) // Engineering manager
+                            .build()
+            );
+
             // Generate bulk employees with random names
             List<Employee> employees = new java.util.ArrayList<>();
             for (int i = 1; i <= 200; i++) {

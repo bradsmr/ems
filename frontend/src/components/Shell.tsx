@@ -1,13 +1,20 @@
 import React, {PropsWithChildren} from "react"
 import {Link, Outlet, useLocation, useNavigate} from "react-router-dom"
 import {Button} from "@/components/ui/button"
-import {LogOut, Users} from "lucide-react"
+import {LogOut, Settings, Users} from "lucide-react"
+import {useCurrentUser} from "@/hooks/useCurrentUser"
+import {Avatar, AvatarFallback} from "@/components/ui/avatar"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbLink,
     BreadcrumbList,
-    BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 
@@ -26,20 +33,15 @@ function AppBreadcrumbs() {
 
                 {paths.map((segment, index) => {
                     const to = "/" + paths.slice(0, index + 1).join("/")
-                    const isLast = index === paths.length - 1
                     const label = segment.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())
 
                     return (
                         <React.Fragment key={to}>
                             <BreadcrumbSeparator/>
                             <BreadcrumbItem>
-                                {isLast ? (
-                                    <BreadcrumbPage>{label}</BreadcrumbPage>
-                                ) : (
-                                    <BreadcrumbLink asChild>
-                                        <Link to={to}>{label}</Link>
-                                    </BreadcrumbLink>
-                                )}
+                                <BreadcrumbLink asChild>
+                                    <Link to={to}>{label}</Link>
+                                </BreadcrumbLink>
                             </BreadcrumbItem>
                         </React.Fragment>
                     )
@@ -49,6 +51,15 @@ function AppBreadcrumbs() {
     )
 }
 
+function PageTitle() {
+    const location = useLocation()
+    const paths = location.pathname.split("/").filter(Boolean)
+    const currentPage = paths.length > 0
+        ? paths[paths.length - 1].replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+        : "Dashboard"
+    
+    return <h1 className="text-lg font-medium mb-4">{currentPage}</h1>
+}
 
 interface ShellProps extends PropsWithChildren {
     onLogout: () => void
@@ -56,6 +67,11 @@ interface ShellProps extends PropsWithChildren {
 
 export default function Shell({onLogout}: ShellProps) {
     const navigate = useNavigate()
+    const { user } = useCurrentUser()
+    
+    const getInitials = (firstName: string, lastName: string) => {
+        return `${firstName[0]}${lastName[0]}`.toUpperCase()
+    }
 
     return (
         <div className="flex h-screen bg-background text-foreground">
@@ -86,13 +102,40 @@ export default function Shell({onLogout}: ShellProps) {
 
             {/* Main layout with topbar and content */}
             <div className="flex-1 flex flex-col overflow-hidden">
-                <header className="h-16 px-6 bg-white border-b flex items-center justify-between shadow-sm">
-                    <div className="text-lg font-medium">Dashboard</div>
-                    <span className="text-sm text-muted-foreground">admin@initech.com</span>
+                <header className="h-12 px-6 bg-white border-b flex items-center justify-between shadow-sm">
+                    <AppBreadcrumbs />
+                    <div className="flex items-center gap-3">
+                        {user && (
+                            <>
+                                <span className="text-sm text-muted-foreground">
+                                    {user.firstName} {user.lastName} ({user.email})
+                                </span>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Avatar className="cursor-pointer">
+                                            <AvatarFallback>
+                                                {getInitials(user.firstName, user.lastName)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => navigate(`/employees/${user.id}`)}>
+                                            <Settings className="mr-2 h-4 w-4" />
+                                            Edit Profile
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={onLogout}>
+                                            <LogOut className="mr-2 h-4 w-4" />
+                                            Logout
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </>
+                        )}
+                    </div>
                 </header>
 
                 <main className="flex-1 overflow-auto p-6 bg-muted space-y-4">
-                    <AppBreadcrumbs/>
+                    <PageTitle />
                     <Outlet/>
                 </main>
             </div>
