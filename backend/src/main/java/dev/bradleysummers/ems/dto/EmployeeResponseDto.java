@@ -14,9 +14,6 @@ public class EmployeeResponseDto {
     private String createdAt;
     private String updatedAt;
     private DepartmentDto department;
-    private Long managerId;
+    private EmployeeSummaryDto manager;
 
-    public void setDepartmentId(Long aLong) {
-        this.department = null;
-    }
 }

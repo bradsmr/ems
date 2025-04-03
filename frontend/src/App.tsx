@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom"
 import Login from "@/features/auth/Login"
 import EmployeeList from "@/features/employees/EmployeeList"
@@ -9,27 +9,34 @@ export default function App() {
     const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"))
     const navigate = useNavigate()
 
-    useEffect(() => {
-        console.log("Token at App level:", token)
-    }, [token])
-
-    const handleLogin = (t: string) => {
-        setToken(t)
-        localStorage.setItem("token", t)
+    const handleLogin = (newToken: string) => {
+        setToken(newToken)
+        localStorage.setItem("token", newToken)
         navigate("/employees")
+    }
+
+    const handleLogout = () => {
+        setToken(null)
+        localStorage.removeItem("token")
+        navigate("/login")
     }
 
     return (
         <Routes>
+            {/* Public Login Route */}
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
+
+            {/* Protected Routes wrapped in Shell */}
             {token ? (
-                <Route element={<Shell />}>
+                <Route element={<Shell onLogout={handleLogout} />}>
                     <Route path="/employees" element={<EmployeeList token={token} />} />
                     <Route path="/employees/:id" element={<EmployeeDetails token={token} />} />
                 </Route>
             ) : (
                 <Route path="*" element={<Navigate to="/login" />} />
             )}
+
+            {/* Catch-all fallback */}
             <Route path="*" element={<Navigate to={token ? "/employees" : "/login"} />} />
         </Routes>
     )

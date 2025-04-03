@@ -1,7 +1,9 @@
 package dev.bradleysummers.ems.mapper;
 
+import dev.bradleysummers.ems.dto.DepartmentDto;
 import dev.bradleysummers.ems.dto.EmployeeRequestDto;
 import dev.bradleysummers.ems.dto.EmployeeResponseDto;
+import dev.bradleysummers.ems.dto.EmployeeSummaryDto;
 import dev.bradleysummers.ems.entity.Department;
 import dev.bradleysummers.ems.entity.Employee;
 
@@ -30,8 +32,25 @@ public class EmployeeMapper {
         dto.setLastName(employee.getLastName());
         dto.setCreatedAt(employee.getCreatedAt() != null ? employee.getCreatedAt().toString() : null);
         dto.setUpdatedAt(employee.getUpdatedAt() != null ? employee.getUpdatedAt().toString() : null);
-        dto.setDepartmentId(employee.getDepartment() != null ? employee.getDepartment().getId() : null);
-        dto.setManagerId(employee.getManager() != null ? employee.getManager().getId() : null);
+
+        if (employee.getDepartment() != null) {
+            Department dept = employee.getDepartment();
+            DepartmentDto deptDto = new DepartmentDto();
+            deptDto.setId(dept.getId());
+            deptDto.setName(dept.getName());
+            dto.setDepartment(deptDto);
+        }
+
+        if (employee.getManager() != null) {
+            Employee manager = employee.getManager();
+            EmployeeSummaryDto managerDto = new EmployeeSummaryDto();
+            managerDto.setId(manager.getId());
+            managerDto.setFirstName(manager.getFirstName());
+            managerDto.setLastName(manager.getLastName());
+            managerDto.setEmail(manager.getEmail());
+            dto.setManager(managerDto);
+        }
+
         return dto;
     }
 }

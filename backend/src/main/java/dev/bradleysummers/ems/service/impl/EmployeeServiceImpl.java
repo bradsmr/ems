@@ -17,6 +17,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Employee create(Employee employee) {
+        validateManager(employee, employee.getManager());
         return employeeRepository.save(employee);
     }
 
@@ -34,6 +35,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Employee update(Long id, Employee updatedEmployee) {
         return employeeRepository.findById(id)
                 .map(existing -> {
+                    validateManager(existing, updatedEmployee.getManager());
+
                     existing.setActive(updatedEmployee.isActive());
                     existing.setEmail(updatedEmployee.getEmail());
                     existing.setPassword(updatedEmployee.getPassword());
@@ -42,6 +45,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                     existing.setLastName(updatedEmployee.getLastName());
                     existing.setDepartment(updatedEmployee.getDepartment());
                     existing.setManager(updatedEmployee.getManager());
+
                     return employeeRepository.save(existing);
                 })
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
@@ -50,5 +54,23 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public void delete(Long id) {
         employeeRepository.deleteById(id);
+    }
+
+    private void validateManager(Employee employee, Employee manager) {
+        if (manager == null) return;
+
+        // Prevent self-reference
+        if (employee.getId() != null && employee.getId().equals(manager.getId())) {
+            throw new IllegalArgumentException("An employee cannot be their own manager.");
+        }
+
+        // Prevent cycles
+        Employee current = manager;
+        while (current != null) {
+            if (current.getId() != null && current.getId().equals(employee.getId())) {
+                throw new IllegalArgumentException("Assigning this manager would create a management cycle.");
+            }
+            current = current.getManager();
+        }
     }
 }

@@ -23,52 +23,59 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (departmentRepository.count() == 0 && employeeRepository.count() == 0) {
-            Department engineering = departmentRepository.save(
-                    Department.builder().name("Engineering").description("Software & Platform").build()
-            );
+            // Create departments
+            Department engineering = departmentRepository.save(new Department(null, "Engineering", "Software & Platform"));
+            Department hr = departmentRepository.save(new Department(null, "HR", "People Ops"));
+            Department sales = departmentRepository.save(new Department(null, "Sales", "Revenue"));
+            Department marketing = departmentRepository.save(new Department(null, "Marketing", "Brand & Outreach"));
 
-            Department hr = departmentRepository.save(
-                    Department.builder().name("HR").description("People Operations").build()
-            );
+            List<Department> departments = List.of(engineering, hr, sales, marketing);
 
-            Department sales = departmentRepository.save(
-                    Department.builder().name("Sales").description("Revenue Generation").build()
-            );
-
-            Department marketing = departmentRepository.save(
-                    Department.builder().name("Marketing").description("Brand & Outreach").build()
-            );
-
-            // Admin
-            Employee admin = employeeRepository.save(
+            // Create default admin user
+            employeeRepository.save(
                     Employee.builder()
                             .email("admin@company.com")
                             .password(passwordEncoder.encode("password"))
-                            .role(Role.ADMIN)
                             .firstName("Admin")
                             .lastName("User")
                             .active(true)
+                            .role(Role.ADMIN)
                             .department(engineering)
                             .build()
             );
 
-            // Managers
-            Employee engManager = employeeRepository.save(newEmployee("eng.manager@company.com", "Emily", "Engman", engineering));
-            Employee hrManager = employeeRepository.save(newEmployee("hr.manager@company.com", "Henry", "Harrison", hr));
-            Employee salesManager = employeeRepository.save(newEmployee("sales.manager@company.com", "Sara", "Saleson", sales));
-            Employee mktManager = employeeRepository.save(newEmployee("marketing.manager@company.com", "Molly", "Marketer", marketing));
+            // Generate managers per department
+            List<Employee> managers = departments.stream()
+                    .map(dept -> employeeRepository.save(
+                            Employee.builder()
+                                    .email(dept.getName().toLowerCase() + ".manager@company.com")
+                                    .password(passwordEncoder.encode("password"))
+                                    .firstName(dept.getName() + "Mgr")
+                                    .lastName("Leader")
+                                    .active(true)
+                                    .role(Role.EMPLOYEE)
+                                    .department(dept)
+                                    .build()
+                    ))
+                    .toList();
 
-            // Employees with managers assigned
-            List<Employee> employees = List.of(
-                    newEmployee("alice.engineer@company.com", "Alice", "Anderson", engineering, engManager),
-                    newEmployee("bob.engineer@company.com", "Bob", "Baxter", engineering, engManager),
-                    newEmployee("carol.hr@company.com", "Carol", "Clark", hr, hrManager),
-                    newEmployee("dave.hr@company.com", "Dave", "Dover", hr, hrManager),
-                    newEmployee("ellen.sales@company.com", "Ellen", "Evans", sales, salesManager),
-                    newEmployee("frank.sales@company.com", "Frank", "Foster", sales, salesManager),
-                    newEmployee("grace.marketing@company.com", "Grace", "Geller", marketing, mktManager),
-                    newEmployee("hank.marketing@company.com", "Hank", "Hudson", marketing, mktManager)
-            );
+            // Generate bulk employees with random names
+            List<Employee> employees = new java.util.ArrayList<>();
+            for (int i = 1; i <= 200; i++) {
+                Department dept = departments.get(i % departments.size());
+                Employee manager = managers.get(i % managers.size());
+
+                employees.add(Employee.builder()
+                        .email("user" + i + "@company.com")
+                        .password(passwordEncoder.encode("password"))
+                        .firstName("First" + i)
+                        .lastName("Last" + i)
+                        .active(true)
+                        .role(Role.EMPLOYEE)
+                        .department(dept)
+                        .manager(manager)
+                        .build());
+            }
 
             employeeRepository.saveAll(employees);
         }
