@@ -5,7 +5,7 @@ import {MoreHorizontal} from "lucide-react"
 import {Button} from "@/components/ui/button"
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu"
 import {Badge} from "@/components/ui/badge"
-import {DataTable} from "@/components/DataTable"
+import {DataTable} from "@/components/DataTable.tsx"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
 
 type Department = {
@@ -51,7 +51,6 @@ const columns: ColumnDef<Department>[] = [
             const department = row.original
             // eslint-disable-next-line react-hooks/rules-of-hooks
             const navigate = useNavigate()
-
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -79,36 +78,36 @@ export function DepartmentList({token}: Props) {
 
     useEffect(() => {
         const fetchDepartments = async () => {
-            setLoading(true)
-            setError(null)
-
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/departments`, {
+                console.log("Fetching departments from backend...");
+                const response = await fetch("http://localhost:8080/api/departments", {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        "Authorization": `Bearer ${token}`,
+                        "Accept": "application/json"
                     }
-                })
-
+                });
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`)
+                    if (response.status === 403) {
+                        throw new Error("You don't have permission to view departments");
+                    }
+                    throw new Error(`Failed to fetch departments: ${response.statusText}`);
                 }
-
-                const data = await response.json()
-                setDepartments(data)
+                const data = await response.json();
+                setDepartments(data);
             } catch (err) {
-                console.error("Error fetching departments:", err)
-                setError(err instanceof Error ? err.message : "Failed to fetch departments")
+                console.error("Error fetching departments:", err);
+                setError(err instanceof Error ? err.message : "Failed to fetch departments");
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
-        }
+        };
 
         if (token && user) {
-            fetchDepartments()
+            fetchDepartments();
         }
-    }, [token, user])
+    }, [token, user]);
 
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
     return (
         <div>
@@ -124,22 +123,20 @@ export function DepartmentList({token}: Props) {
                     </Button>
                 )}
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-                <DataTable
-                    columns={columns}
-                    data={departments}
-                    loading={loading}
-                    error={error}
-                    searchColumn="name"
-                    searchPlaceholder="Filter by name..."
-                    pageSize={50}
-                    columnMapping={{
-                        name: "Name",
-                        description: "Description",
-                        actions: "Actions"
-                    }}
-                />
-            </div>
+            <DataTable
+                columns={columns}
+                data={departments}
+                loading={loading}
+                error={error}
+                searchColumn="name"
+                searchPlaceholder="Filter by name..."
+                pageSize={50}
+                columnMapping={{
+                    name: "Name",
+                    description: "Description",
+                    actions: "Actions"
+                }}
+            />
         </div>
     )
 }
