@@ -1,49 +1,12 @@
 import {useEffect, useState} from "react"
 import {useNavigate} from "react-router-dom"
-import {
-    ColumnDef,
-    ColumnFiltersState,
-    flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    SortingState,
-    useReactTable,
-    VisibilityState,
-} from "@tanstack/react-table"
-import {ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal, Shield, User} from "lucide-react"
+import {ColumnDef} from "@tanstack/react-table"
+import {MoreHorizontal, Shield, User} from "lucide-react"
 import {Button} from "@/components/ui/button"
-import {Input} from "@/components/ui/input"
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-} from "@/components/ui/dropdown-menu"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import {Skeleton} from "@/components/ui/skeleton.tsx"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu"
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/components/ui/tooltip"
+import {DataTable} from "@/components/DataTable.tsx"
+import {Badge} from "@/components/ui/badge"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
 
 type Employee = {
@@ -55,43 +18,36 @@ type Employee = {
     department: {
         name: string
     }
+    manager?: {
+        id: number
+        firstName: string
+        lastName: string
+        email: string
+    }
 }
 
 type Props = {
     token: string
 }
 
-const SortableHeader = ({column, title}: { column: any, title: string }) => (
-    <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="hover:cursor-pointer"
-    >
-        {title}
-        {column.getIsSorted() === "asc" ? (
-            <ArrowUp className="ml-2 h-4 w-4" />
-        ) : column.getIsSorted() === "desc" ? (
-            <ArrowDown className="ml-2 h-4 w-4" />
-        ) : (
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-        )}
-    </Button>
-)
-
 const columns: ColumnDef<Employee>[] = [
     {
         accessorKey: "firstName",
-        header: ({column}) => <SortableHeader column={column} title="First Name" />,
+        header: "First Name",
+        enableSorting: true,
     },
     {
         accessorKey: "lastName",
-        header: ({column}) => <SortableHeader column={column} title="Last Name" />,
+        header: "Last Name",
+        enableSorting: true,
     },
     {
         accessorKey: "email",
-        header: ({column}) => <SortableHeader column={column} title="Email" />,
+        header: "Email",
+        enableSorting: true,
         cell: ({row}) => {
             const email = row.getValue("email") as string;
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const navigate = useNavigate();
             return (
                 <Button
@@ -106,7 +62,8 @@ const columns: ColumnDef<Employee>[] = [
     },
     {
         accessorKey: "role",
-        header: ({column}) => <SortableHeader column={column} title="Role" />,
+        header: "Role",
+        enableSorting: true,
         cell: ({row}) => {
             const role = row.getValue("role") as string;
             return (
@@ -115,9 +72,9 @@ const columns: ColumnDef<Employee>[] = [
                         <Tooltip>
                             <TooltipTrigger>
                                 {role === "ADMIN" ? (
-                                    <Shield className="h-4 w-4 text-primary" />
+                                    <Shield className="h-4 w-4 text-primary"/>
                                 ) : (
-                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <User className="h-4 w-4 text-muted-foreground"/>
                                 )}
                             </TooltipTrigger>
                             <TooltipContent>
@@ -131,12 +88,37 @@ const columns: ColumnDef<Employee>[] = [
     },
     {
         accessorKey: "department.name",
-        header: ({column}) => <SortableHeader column={column} title="Department" />,
+        id: "Department",
+        header: "Department",
+        enableSorting: true,
+    },
+    {
+        accessorKey: "manager",
+        header: "Manager",
+        enableSorting: true,
+        cell: ({row}) => {
+            const manager = row.getValue("manager") as Employee["manager"]
+            if (!manager) return "-"
+            
+            const navigate = useNavigate()
+            return (
+                <Button
+                    variant="link"
+                    className="p-0 h-auto font-normal text-primary"
+                    onClick={() => navigate(`/employees/${manager.id}`)}
+                >
+                    {`${manager.firstName} ${manager.lastName}`}
+                </Button>
+            )
+        },
     },
     {
         id: "actions",
+        header: "Actions",
+        enableSorting: false,
         cell: ({row}) => {
             const employee = row.original
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const navigate = useNavigate()
 
             return (
@@ -162,221 +144,80 @@ export default function EmployeeList({token}: Props) {
     const [employees, setEmployees] = useState<Employee[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [sorting, setSorting] = useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-    const [pageSize, setPageSize] = useState(25)
-    const navigate = useNavigate()
-    const { user } = useCurrentUser()
+    const {user} = useCurrentUser()
 
     useEffect(() => {
-        fetch("http://localhost:8080/api/employees", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error("Failed to fetch employees")
+        const fetchEmployees = async () => {
+            try {
+                const response = await fetch("http://localhost:8080/api/employees", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Accept": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error("You don't have permission to view employees");
+                    }
+                    throw new Error(`Failed to fetch employees: ${response.statusText}`);
                 }
-                return res.json()
-            })
-            .then((data) => {
-                setEmployees(data)
-                setLoading(false)
-            })
-            .catch((err) => {
-                setError(err.message)
-                setLoading(false)
-            })
-    }, [token])
 
-    const table = useReactTable({
-        data: employees,
-        columns,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        onColumnVisibilityChange: setColumnVisibility,
-        state: {
-            sorting,
-            columnFilters,
-            columnVisibility,
-            pagination: {
-                pageSize: pageSize,
-                pageIndex: 0,
-            },
-        },
-    })
+                const data = await response.json();
 
-    if (loading) {
-        return (
-            <div className="space-y-2">
-                <Skeleton className="h-8 w-full"/>
-                <Skeleton className="h-8 w-full"/>
-                <Skeleton className="h-8 w-full"/>
-                <Skeleton className="h-8 w-full"/>
-                <Skeleton className="h-8 w-full"/>
-            </div>
-        )
-    }
+                // Filter based on user role
+                if (user?.role === "EMPLOYEE") {
+                    setEmployees(data.filter((employee: Employee) => employee.id === user.id));
+                } else {
+                    setEmployees(data);
+                }
+            } catch (err) {
+                console.error("Error fetching employees:", err);
+                setError(err instanceof Error ? err.message : "Failed to fetch employees");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    if (error) {
-        return <div className="text-center text-red-500">{error}</div>
-    }
+        if (token && user) {
+            fetchEmployees();
+        }
+    }, [token, user]);
+
+    const navigate = useNavigate();
 
     return (
         <div>
-            <div className="flex items-center justify-between py-4">
-                <Input
-                    placeholder="Filter by name..."
-                    value={(table.getColumn("firstName")?.getFilterValue() as string) ?? ""}
-                    onChange={(event) =>
-                        table.getColumn("firstName")?.setFilterValue(event.target.value)
-                    }
-                    className="max-w-sm"
-                />
-                <div className="flex items-center space-x-2">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
-                                Columns
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
-                            {table
-                                .getAllColumns()
-                                .filter((column) => column.getCanHide())
-                                .map((column) => {
-                                    const displayName = {
-                                        firstName: "First Name",
-                                        lastName: "Last Name",
-                                        email: "Email",
-                                        role: "Role",
-                                        department_name: "Department",
-                                        actions: "Actions"
-                                    }[column.id] || column.id;
-
-                                    return (
-                                        <DropdownMenuCheckboxItem
-                                            key={column.id}
-                                            className="capitalize"
-                                            checked={column.getIsVisible()}
-                                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                            onSelect={(e) => e.preventDefault()}
-                                        >
-                                            {displayName}
-                                        </DropdownMenuCheckboxItem>
-                                    )
-                                })}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    {user?.role === "ADMIN" && (
-                        <Button onClick={() => navigate("/employees/new")}>
-                            Add Employee
-                        </Button>
-                    )}
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-sm">
+                        Total Employees: {employees.length}
+                    </Badge>
                 </div>
-            </div>
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => {
-                                    return (
-                                        <TableHead key={header.id} className="hover:cursor-pointer">
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext()
-                                                )}
-                                        </TableHead>
-                                    )
-                                })}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-                    <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row, index) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={row.getIsSelected() && "selected"}
-                                    className={
-                                        index === 0
-                                            ? "bg-primary/5"
-                                            : index % 2 === 0
-                                            ? "bg-muted/50"
-                                            : ""
-                                    }
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext()
-                                            )}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-24 text-center"
-                                >
-                                    No results.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-            <div className="flex items-center gap-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
-                    Page {table.getState().pagination.pageIndex + 1} of{" "}
-                    {table.getPageCount()} · Total {employees.length} records
-                </div>
-                <Select
-                    value={pageSize.toString()}
-                    onValueChange={(value) => setPageSize(Number(value))}
-                >
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select page size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="25">25 per page</SelectItem>
-                        <SelectItem value="50">50 per page</SelectItem>
-                        <SelectItem value="100">100 per page</SelectItem>
-                        <SelectItem value="250">250 per page</SelectItem>
-                        <SelectItem value="500">500 per page</SelectItem>
-                    </SelectContent>
-                </Select>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                    >
-                        Previous
+                {user?.role === "ADMIN" && (
+                    <Button onClick={() => navigate("/employees/new")}>
+                        Add Employee
                     </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                    >
-                        Next
-                    </Button>
-                </div>
+                )}
             </div>
+            <DataTable
+                columns={columns}
+                data={employees}
+                loading={loading}
+                error={error}
+                searchColumn="firstName"
+                searchPlaceholder="Filter by name..."
+                pageSize={50}
+                columnMapping={{
+                    firstName: "First Name",
+                    lastName: "Last Name",
+                    email: "Email",
+                    role: "Role",
+                    "department.name": "Department",
+                    manager: "Manager",
+                    actions: "Actions"
+                }}
+            />
         </div>
     )
 }
