@@ -7,6 +7,7 @@ import dev.bradleysummers.ems.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,9 +19,15 @@ import java.util.stream.Collectors;
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Employee create(Employee employee) {
+        // Encrypt password before saving
+        if (employee.getPassword() != null && !employee.getPassword().isEmpty()) {
+            employee.setPassword(passwordEncoder.encode(employee.getPassword()));
+        }
+        
         validateManager(employee, employee.getManager());
         return employeeRepository.save(employee);
     }
@@ -54,7 +61,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
                     existing.setActive(updatedEmployee.isActive());
                     existing.setEmail(updatedEmployee.getEmail());
-                    existing.setPassword(updatedEmployee.getPassword());
+                    
+                    // Only update password if a new one is provided
+                    if (updatedEmployee.getPassword() != null && !updatedEmployee.getPassword().isEmpty()) {
+                        existing.setPassword(passwordEncoder.encode(updatedEmployee.getPassword()));
+                    }
+                    
                     existing.setRole(updatedEmployee.getRole());
                     existing.setFirstName(updatedEmployee.getFirstName());
                     existing.setLastName(updatedEmployee.getLastName());
@@ -68,6 +80,31 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public void delete(Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Employee currentUser = employeeRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+        
+        // Only admins can delete employees
+        if (currentUser.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Only administrators can delete employees");
+        }
+        
+        // Admin cannot delete themselves
+        if (currentUser.getId().equals(id)) {
+            throw new RuntimeException("Administrators cannot delete their own account");
+        }
+        
+        // Check if employee exists
+        employeeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
+        
+        // Remove this employee as manager from any employees they manage
+        List<Employee> managedEmployees = employeeRepository.findByManagerId(id);
+        for (Employee managed : managedEmployees) {
+            managed.setManager(null);
+            employeeRepository.save(managed);
+        }
+        
         employeeRepository.deleteById(id);
     }
 

@@ -4,8 +4,8 @@ import { Toaster } from "sonner"
 import Login from "@/features/auth/Login"
 import EmployeeList from "@/features/employees/EmployeeList"
 import EmployeeDetails from "@/features/employees/EmployeeDetails"
-import { DepartmentList } from "@/features/departments/DepartmentList"
-import { DepartmentDetails } from "@/features/departments/DepartmentDetails"
+import DepartmentList from "@/features/departments/DepartmentList"
+import DepartmentDetails from "@/features/departments/DepartmentDetails"
 import Shell from "@/components/Shell"
 
 export default function App() {
@@ -45,7 +45,12 @@ export default function App() {
                 {/* Catch-all fallback */}
                 <Route path="*" element={<Navigate to={token ? "/employees" : "/login"} />} />
             </Routes>
-            <Toaster richColors position="top-right" />
+            <Toaster 
+                position="top-center" 
+                richColors 
+                closeButton
+                duration={5000}
+            />
         </>
     )
 }

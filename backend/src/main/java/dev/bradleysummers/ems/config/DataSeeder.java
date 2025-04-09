@@ -94,7 +94,7 @@ public class DataSeeder implements CommandLineRunner {
             Random random = new Random();
 
             // Seed employees with unique name combinations to create unique emails
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 25; i++) {
                 Department dept = departments.get(random.nextInt(departments.size()));
 
                 // Keep trying name combinations until we find one that produces a unique email
@@ -131,7 +131,7 @@ public class DataSeeder implements CommandLineRunner {
             }
 
             // After seeding initial employees, add more with managers from the employee pool
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 25; i++) {
                 Department dept = departments.get(random.nextInt(departments.size()));
 
                 // Keep trying name combinations until we find one that produces a unique email
