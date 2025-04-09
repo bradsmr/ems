@@ -136,7 +136,7 @@ export function DataTable<TData>({
 
     return (
         <div className="w-full">
-            <div className="flex items-center py-4">
+            <div className="flex items-center py-4 px-4 bg-white rounded-t-lg border border-border border-b-0 shadow-sm">
                 {searchColumn && (
                     <Input
                         placeholder={searchPlaceholder}
@@ -144,12 +144,12 @@ export function DataTable<TData>({
                         onChange={(event) =>
                             table.getColumn(searchColumn)?.setFilterValue(event.target.value)
                         }
-                        className="max-w-sm"
+                        className="max-w-sm bg-white"
                     />
                 )}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
+                        <Button variant="outline" className="ml-auto bg-white">
                             Columns <ChevronDown className="ml-2 h-4 w-4"/>
                         </Button>
                     </DropdownMenuTrigger>
@@ -171,7 +171,7 @@ export function DataTable<TData>({
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-b-lg border bg-white shadow-sm">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

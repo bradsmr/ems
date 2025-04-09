@@ -1,7 +1,7 @@
 import React, {PropsWithChildren} from "react"
 import {Link, Outlet, useLocation, useNavigate} from "react-router-dom"
 import {Button} from "@/components/ui/button"
-import {LogOut, Settings, Users} from "lucide-react"
+import {LogOut, Settings, Users, Layers} from "lucide-react"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
 import {Avatar, AvatarFallback} from "@/components/ui/avatar"
 import {
@@ -74,28 +74,42 @@ export default function Shell({onLogout}: ShellProps) {
     }
 
     return (
-        <div className="flex h-screen bg-background text-foreground">
+        <div className="flex h-screen bg-muted text-foreground">
             {/* Sidebar */}
-            <aside className="w-64 bg-primary text-primary-foreground flex flex-col p-6">
-                <div className="text-2xl font-bold tracking-tight mb-6">Initech EMS</div>
+            <aside className="w-56 bg-white border-r border-border flex flex-col p-4">
+                <div className="flex items-center justify-center mb-8">
+                    <svg width="32" height="32" viewBox="0 0 32 32" className="mr-2">
+                        <rect width="32" height="32" rx="8" fill="#3CB371"/>
+                        <path d="M8 16H24M16 8V24" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <div className="text-xl font-bold tracking-tight text-foreground">Initech EMS</div>
+                </div>
 
                 <nav className="flex flex-col gap-2 flex-grow">
                     <Button
                         variant="ghost"
-                        className="justify-start"
+                        className="justify-start text-foreground hover:bg-muted"
                         onClick={() => navigate("/employees")}
                     >
-                        <Users className="mr-2 h-4 w-4"/>
+                        <Users className="mr-2 h-5 w-5 text-primary"/>
                         Employees
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        className="justify-start text-foreground hover:bg-muted"
+                        onClick={() => navigate("/departments")}
+                    >
+                        <Layers className="mr-2 h-5 w-5 text-primary"/>
+                        Departments
                     </Button>
                 </nav>
 
                 <Button
                     variant="ghost"
-                    className="justify-start mt-auto"
+                    className="justify-start mt-auto text-foreground hover:bg-muted"
                     onClick={onLogout}
                 >
-                    <LogOut className="mr-2 h-4 w-4"/>
+                    <LogOut className="mr-2 h-5 w-5 text-primary"/>
                     Logout
                 </Button>
             </aside>
@@ -134,7 +148,7 @@ export default function Shell({onLogout}: ShellProps) {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-auto p-6 bg-muted space-y-4">
+                <main className="flex-1 overflow-auto p-6 bg-muted">
                     <PageTitle />
                     <Outlet/>
                 </main>

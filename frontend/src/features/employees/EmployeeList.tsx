@@ -52,7 +52,7 @@ const columns: ColumnDef<Employee>[] = [
             return (
                 <Button
                     variant="link"
-                    className="p-0 h-auto font-normal text-primary"
+                    className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800"
                     onClick={() => navigate(`/employees/${row.original.id}`)}
                 >
                     {email}
@@ -104,7 +104,7 @@ const columns: ColumnDef<Employee>[] = [
             return (
                 <Button
                     variant="link"
-                    className="p-0 h-auto font-normal text-primary"
+                    className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800"
                     onClick={() => navigate(`/employees/${manager.id}`)}
                 >
                     {`${manager.firstName} ${manager.lastName}`}
@@ -188,9 +188,9 @@ export default function EmployeeList({token}: Props) {
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-sm">
+                    <Badge variant="outline" className="text-sm bg-white shadow-sm px-3 py-1">
                         Total Employees: {employees.length}
                     </Badge>
                 </div>
