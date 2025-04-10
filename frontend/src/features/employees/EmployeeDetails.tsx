@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
 
 type Employee = {
     id: number;
@@ -38,7 +39,7 @@ type Props = {
 };
 
 export default function EmployeeDetails({ token }: Props) {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user } = useCurrentUser();
     const isNewEmployee = id === 'new';
@@ -61,6 +62,8 @@ export default function EmployeeDetails({ token }: Props) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
+    const [initialEmployee, setInitialEmployee] = useState<Employee | null>(null);
+    const [hasChanges, setHasChanges] = useState(false);
     
     // Determine if the current user can edit this employee
     const canEdit = user?.role === 'ADMIN' || 
@@ -142,6 +145,8 @@ export default function EmployeeDetails({ token }: Props) {
                     departmentId: response.data.department?.id || null,
                     managerId: response.data.manager?.id || null
                 });
+                setInitialEmployee(JSON.parse(JSON.stringify(response.data))); // Deep copy for comparison
+                setHasChanges(false);
                 
                 // Check if user has permission to view this employee
                 if (!canView()) {
@@ -288,31 +293,101 @@ export default function EmployeeDetails({ token }: Props) {
         }
     };
     
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setEmployee(prev => ({ ...prev, [name]: value }));
         
-        // Clear field-specific error when user types
+        // Clear form error for this field when user makes changes
         if (formErrors[name]) {
             setFormErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[name];
-                return newErrors;
+                const updated = { ...prev };
+                delete updated[name];
+                return updated;
             });
         }
+        
+        setEmployee(prev => {
+            const updatedEmployee = { ...prev, [name]: value };
+            
+            // Check if there are any changes compared to the initial data
+            if (initialEmployee && !isNewEmployee) {
+                const normalizedInitial = { ...initialEmployee } as any;
+                const normalizedCurrent = { ...updatedEmployee } as any;
+                
+                // Convert string values to appropriate types for comparison
+                if (name === 'active') {
+                    normalizedCurrent.active = value === 'true';
+                }
+                if (name === 'departmentId' || name === 'managerId') {
+                    normalizedCurrent[name] = value ? Number(value) : undefined;
+                }
+                
+                // Compare the current state with initial state
+                const hasAnyChanges = Object.keys(normalizedCurrent).some(key => {
+                    // Skip password field if empty (not being changed)
+                    if (key === 'password' && !normalizedCurrent[key]) return false;
+                    
+                    // Skip id field
+                    if (key === 'id') return false;
+                    
+                    return JSON.stringify(normalizedCurrent[key]) !== 
+                           JSON.stringify(normalizedInitial[key]);
+                });
+                
+                setHasChanges(hasAnyChanges);
+            } else if (isNewEmployee) {
+                // For new employees, check if required fields are filled
+                const requiredFields = ['firstName', 'lastName', 'email', 'password'];
+                const allRequiredFilled = requiredFields.every(field => 
+                    updatedEmployee[field as keyof Employee] && 
+                    String(updatedEmployee[field as keyof Employee]).trim() !== ''
+                );
+                setHasChanges(allRequiredFilled);
+            }
+            
+            return updatedEmployee;
+        });
     };
     
     const handleSelectChange = (name: string, value: string) => {
-        setEmployee(prev => ({ ...prev, [name]: value === 'null' ? null : Number(value) }));
-        
-        // Clear field-specific error when user selects
+        // Clear form error for this field when user makes changes
         if (formErrors[name]) {
             setFormErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[name];
-                return newErrors;
+                const updated = { ...prev };
+                delete updated[name];
+                return updated;
             });
         }
+        
+        setEmployee(prev => {
+            const updatedValue = name === 'departmentId' || name === 'managerId' 
+                ? (value ? Number(value) : undefined) 
+                : name === 'active' 
+                    ? value === 'true' 
+                    : value;
+            
+            const updatedEmployee = { ...prev, [name]: updatedValue };
+            
+            // Check if there are any changes compared to the initial data
+            if (initialEmployee && !isNewEmployee) {
+                const normalizedInitial = { ...initialEmployee } as any;
+                const normalizedCurrent = { ...updatedEmployee } as any;
+                
+                const hasAnyChanges = Object.keys(updatedEmployee).some(key => {
+                    // Skip password field if empty (not being changed)
+                    if (key === 'password' && !normalizedCurrent[key]) return false;
+                    
+                    // Skip id field
+                    if (key === 'id') return false;
+                    
+                    return JSON.stringify(normalizedCurrent[key]) !== 
+                           JSON.stringify(normalizedInitial[key]);
+                });
+                
+                setHasChanges(hasAnyChanges);
+            }
+            
+            return updatedEmployee;
+        });
     };
     
     if (loading) {
@@ -325,13 +400,41 @@ export default function EmployeeDetails({ token }: Props) {
     
     return (
         <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-                <CardTitle>{isNewEmployee ? 'Create Employee' : 'Employee Details'}</CardTitle>
+            <CardHeader className="relative">
+                <CardTitle>
+                    {isNewEmployee ? 'New Employee' : `${employee.firstName} ${employee.lastName}`}
+                </CardTitle>
                 <CardDescription>
-                    {isNewEmployee 
-                        ? 'Add a new employee to the system' 
-                        : 'View and manage employee information'}
+                    {isNewEmployee ? 'Create a new employee' : employee.email}
                 </CardDescription>
+                
+                {canDelete && !isNewEmployee && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute top-4 right-4 text-gray-500 hover:text-red-600 hover:bg-transparent"
+                            >
+                                <Trash2 className="h-5 w-5" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the employee.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                                    Delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
             </CardHeader>
             <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-4">
@@ -487,50 +590,23 @@ export default function EmployeeDetails({ token }: Props) {
                     )}
                 </CardContent>
                 
-                <CardFooter className="flex justify-between">
+                <CardFooter className="flex justify-between pt-6 border-t mt-6">
+                    <Button variant="outline" type="button" onClick={() => navigate('/employees')}>
+                        Cancel
+                    </Button>
+                    
                     <div className="flex gap-2">
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => navigate('/employees')}
-                        >
-                            Cancel
-                        </Button>
-                        
-                        {canDelete && !isNewEmployee && (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" type="button">
-                                        Delete
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the employee
-                                            and remove their data from the system.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDelete}>
-                                            Delete
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                        {canEdit && (
+                            <Button 
+                                type="submit" 
+                                disabled={saving || !hasChanges} 
+                                onClick={handleSubmit}
+                                className={`${hasChanges ? 'bg-[#3CB371] hover:bg-[#2E8B57]' : 'bg-gray-400 cursor-not-allowed'}`}
+                            >
+                                {saving ? 'Saving...' : (isNewEmployee ? 'Create' : 'Update')}
+                            </Button>
                         )}
                     </div>
-                    
-                    {canEdit && (
-                        <Button 
-                            type="submit" 
-                            disabled={saving}
-                        >
-                            {saving ? 'Saving...' : (isNewEmployee ? 'Create' : 'Save Changes')}
-                        </Button>
-                    )}
                 </CardFooter>
             </form>
         </Card>

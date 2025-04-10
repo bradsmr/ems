@@ -1,5 +1,6 @@
-import React, {PropsWithChildren} from "react"
+import React, {PropsWithChildren, useState, useEffect} from "react"
 import {Link, Outlet, useLocation, useNavigate} from "react-router-dom"
+import axios from "axios"
 import {Button} from "@/components/ui/button"
 import {LogOut, Settings, Users, Layers} from "lucide-react"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
@@ -21,6 +22,43 @@ import {
 function AppBreadcrumbs() {
     const location = useLocation()
     const paths = location.pathname.split("/").filter(Boolean)
+    const [entityName, setEntityName] = useState<string | null>(null)
+    const token = localStorage.getItem("token")
+
+    useEffect(() => {
+        const fetchEntityName = async () => {
+            if (!token) return
+            
+            if (paths.length === 2 && (paths[0] === "employees" || paths[0] === "departments")) {
+                const id = paths[1]
+                if (id === "new") {
+                    setEntityName("New")
+                    return
+                }
+                
+                try {
+                    if (paths[0] === "employees") {
+                        const response = await axios.get(`http://localhost:8080/api/employees/${id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        })
+                        setEntityName(`${response.data.firstName} ${response.data.lastName}`)
+                    } else if (paths[0] === "departments") {
+                        const response = await axios.get(`http://localhost:8080/api/departments/${id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        })
+                        setEntityName(response.data.name)
+                    }
+                } catch (error) {
+                    console.error(`Error fetching ${paths[0]} details:`, error)
+                    setEntityName(null)
+                }
+            } else {
+                setEntityName(null)
+            }
+        }
+        
+        fetchEntityName()
+    }, [location.pathname, token])
 
     return (
         <Breadcrumb>
@@ -33,7 +71,13 @@ function AppBreadcrumbs() {
 
                 {paths.map((segment, index) => {
                     const to = "/" + paths.slice(0, index + 1).join("/")
-                    const label = segment.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+                    
+                    let label
+                    if (index === paths.length - 1 && entityName && (paths[0] === "employees" || paths[0] === "departments")) {
+                        label = entityName
+                    } else {
+                        label = segment.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+                    }
 
                     return (
                         <React.Fragment key={to}>
@@ -54,11 +98,49 @@ function AppBreadcrumbs() {
 function PageTitle() {
     const location = useLocation()
     const paths = location.pathname.split("/").filter(Boolean)
-    const currentPage = paths.length > 0
-        ? paths[paths.length - 1].replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())
-        : "Dashboard"
+    const [entityName, setEntityName] = useState<string | null>(null)
+    const token = localStorage.getItem("token")
     
-    return <h1 className="text-lg font-medium mb-4">{currentPage}</h1>
+    useEffect(() => {
+        const fetchEntityName = async () => {
+            if (!token) return
+            
+            if (paths.length === 2 && (paths[0] === "employees" || paths[0] === "departments")) {
+                const id = paths[1]
+                if (id === "new") {
+                    setEntityName("New " + (paths[0] === "employees" ? "Employee" : "Department"))
+                    return
+                }
+                
+                try {
+                    if (paths[0] === "employees") {
+                        const response = await axios.get(`http://localhost:8080/api/employees/${id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        })
+                        setEntityName(`${response.data.firstName} ${response.data.lastName}`)
+                    } else if (paths[0] === "departments") {
+                        const response = await axios.get(`http://localhost:8080/api/departments/${id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        })
+                        setEntityName(response.data.name)
+                    }
+                } catch (error) {
+                    console.error(`Error fetching ${paths[0]} details:`, error)
+                    setEntityName(null)
+                }
+            } else {
+                setEntityName(null)
+            }
+        }
+        
+        fetchEntityName()
+    }, [location.pathname, token, paths])
+    
+    const pageTitle = entityName || (paths.length > 0
+        ? paths[paths.length - 1].replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+        : "Dashboard")
+    
+    return <h1 className="text-lg font-medium mb-4">{pageTitle}</h1>
 }
 
 interface ShellProps extends PropsWithChildren {
@@ -123,10 +205,15 @@ export default function Shell({onLogout}: ShellProps) {
                             <>
                                 <span className="text-sm text-muted-foreground">
                                     {user.firstName} {user.lastName} ({user.email})
+                                    {user.role === "ADMIN" && (
+                                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#3CB371] text-white">
+                                            Admin
+                                        </span>
+                                    )}
                                 </span>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Avatar className="cursor-pointer">
+                                        <Avatar className={`cursor-pointer ${user.role === "ADMIN" ? "border-2 border-[#3CB371]" : ""}`}>
                                             <AvatarFallback>
                                                 {getInitials(user.firstName, user.lastName)}
                                             </AvatarFallback>

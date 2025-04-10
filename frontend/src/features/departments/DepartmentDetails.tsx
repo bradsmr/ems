@@ -9,6 +9,7 @@ import {Textarea} from "@/components/ui/textarea"
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from "@/components/ui/alert-dialog"
+import { Trash2 } from 'lucide-react'
 
 type Department = {
     id: number
@@ -21,7 +22,7 @@ type Props = {
 }
 
 export default function DepartmentDetails({token}: Props) {
-    const {id} = useParams()
+    const {id} = useParams<{ id: string }>();
     const navigate = useNavigate()
     const {user} = useCurrentUser()
     const isNewDepartment = id === "new"
@@ -38,6 +39,8 @@ export default function DepartmentDetails({token}: Props) {
     const [error, setError] = useState<string | null>(null)
     const [formErrors, setFormErrors] = useState<{[key: string]: string}>({})
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+    const [initialDepartment, setInitialDepartment] = useState<Department | null>(null)
+    const [hasChanges, setHasChanges] = useState(false)
     
     // Only admins can edit departments
     const canEdit = user?.role === "ADMIN"
@@ -46,31 +49,33 @@ export default function DepartmentDetails({token}: Props) {
     const canDelete = user?.role === "ADMIN"
     
     useEffect(() => {
+        if (isNewDepartment) {
+            setLoading(false)
+            return
+        }
+        
         const fetchDepartment = async () => {
-            if (isNewDepartment) return
-            
-            setLoading(true)
-            setError(null)
-            
             try {
                 const response = await axios.get(`http://localhost:8080/api/departments/${id}`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
                     }
                 })
                 
                 setDepartment(response.data)
+                setInitialDepartment(JSON.parse(JSON.stringify(response.data)))
+                setHasChanges(false)
             } catch (err) {
                 console.error("Error fetching department:", err)
                 setError("Failed to load department details")
-                navigate("/departments")
             } finally {
                 setLoading(false)
             }
         }
         
         fetchDepartment()
-    }, [id, isNewDepartment, token, navigate])
+    }, [id, isNewDepartment, token])
     
     const validateForm = () => {
         const errors: {[key: string]: string} = {}
@@ -213,7 +218,6 @@ export default function DepartmentDetails({token}: Props) {
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const {name, value} = e.target
-        setDepartment(prev => ({...prev, [name]: value}))
         
         // Clear field-specific error when user types
         if (formErrors[name]) {
@@ -223,6 +227,28 @@ export default function DepartmentDetails({token}: Props) {
                 return newErrors
             })
         }
+        
+        setDepartment(prev => {
+            const updatedDepartment = {...prev, [name]: value}
+            
+            // Check if there are any changes compared to the initial data
+            if (initialDepartment && !isNewDepartment) {
+                const hasAnyChanges = Object.keys(updatedDepartment).some(key => {
+                    // Skip id field
+                    if (key === 'id') return false
+                    
+                    return JSON.stringify(updatedDepartment[key as keyof Department]) !== 
+                           JSON.stringify(initialDepartment[key as keyof Department])
+                })
+                
+                setHasChanges(hasAnyChanges)
+            } else if (isNewDepartment) {
+                // For new departments, check if name is filled (required field)
+                setHasChanges(!!updatedDepartment.name.trim())
+            }
+            
+            return updatedDepartment
+        })
     }
     
     if (loading) {
@@ -235,13 +261,47 @@ export default function DepartmentDetails({token}: Props) {
     
     return (
         <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-                <CardTitle>{isNewDepartment ? "Create Department" : "Department Details"}</CardTitle>
+            <CardHeader className="relative">
+                <CardTitle>
+                    {isNewDepartment ? 'New Department' : department.name}
+                </CardTitle>
                 <CardDescription>
-                    {isNewDepartment 
-                        ? "Add a new department to the system" 
-                        : "View and manage department information"}
+                    {isNewDepartment ? 'Create a new department' : 'Department details and management'}
                 </CardDescription>
+                
+                {canDelete && !isNewDepartment && (
+                    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                        <AlertDialogTrigger asChild>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute top-4 right-4 text-gray-500 hover:text-red-600 hover:bg-transparent"
+                            >
+                                <Trash2 className="h-5 w-5" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the department.
+                                    Any employees assigned to this department will be updated to have no department.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                    onClick={handleDelete} 
+                                    disabled={deleting}
+                                    className="bg-red-600 hover:bg-red-700"
+                                >
+                                    {deleting ? "Deleting..." : "Delete"}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
             </CardHeader>
             <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-4">
@@ -273,51 +333,27 @@ export default function DepartmentDetails({token}: Props) {
                     </div>
                 </CardContent>
                 
-                <CardFooter className="flex justify-between">
+                <CardFooter className="flex justify-between pt-6 border-t mt-6">
+                    <Button 
+                        variant="outline" 
+                        type="button" 
+                        onClick={() => navigate("/departments")}
+                    >
+                        Cancel
+                    </Button>
+                    
                     <div className="flex gap-2">
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => navigate("/departments")}
-                        >
-                            Cancel
-                        </Button>
-                        
-                        {canDelete && !isNewDepartment && (
-                            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" type="button">
-                                        Delete
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the department.
-                                            Any employees assigned to this department will be updated to have no department.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-                                            {deleting ? "Deleting..." : "Delete"}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                        {canEdit && (
+                            <Button 
+                                type="submit" 
+                                disabled={saving || !hasChanges}
+                                onClick={handleSubmit}
+                                className={`${hasChanges ? 'bg-[#3CB371] hover:bg-[#2E8B57]' : 'bg-gray-400 cursor-not-allowed'}`}
+                            >
+                                {saving ? "Saving..." : (isNewDepartment ? "Create" : "Update")}
+                            </Button>
                         )}
                     </div>
-                    
-                    {canEdit && (
-                        <Button 
-                            type="submit" 
-                            disabled={saving}
-                        >
-                            {saving ? "Saving..." : (isNewDepartment ? "Create" : "Save Changes")}
-                        </Button>
-                    )}
                 </CardFooter>
             </form>
         </Card>
