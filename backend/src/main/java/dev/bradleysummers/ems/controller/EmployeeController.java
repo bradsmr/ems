@@ -4,6 +4,7 @@ import dev.bradleysummers.ems.dto.EmployeeRequestDto;
 import dev.bradleysummers.ems.dto.EmployeeResponseDto;
 import dev.bradleysummers.ems.entity.Department;
 import dev.bradleysummers.ems.entity.Employee;
+import dev.bradleysummers.ems.enums.Role;
 import dev.bradleysummers.ems.mapper.EmployeeMapper;
 import dev.bradleysummers.ems.service.DepartmentService;
 import dev.bradleysummers.ems.service.EmployeeService;
@@ -23,11 +24,34 @@ public class EmployeeController {
     private final DepartmentService departmentService;
 
     @GetMapping
-    public ResponseEntity<List<EmployeeResponseDto>> getAllEmployees() {
+    public ResponseEntity<List<EmployeeResponseDto>> getAllEmployees(
+            @RequestParam(required = false) String role) {
+        
         List<Employee> employees = employeeService.findAll();
+        
+        // Filter by role if specified
+        if (role != null && !role.isEmpty()) {
+            String[] roles = role.split(",");
+            employees = employees.stream()
+                    .filter(employee -> {
+                        for (String r : roles) {
+                            try {
+                                if (employee.getRole() == Role.valueOf(r)) {
+                                    return true;
+                                }
+                            } catch (IllegalArgumentException e) {
+                                // Invalid role, ignore
+                            }
+                        }
+                        return false;
+                    })
+                    .collect(Collectors.toList());
+        }
+        
         List<EmployeeResponseDto> response = employees.stream()
                 .map(EmployeeMapper::toDto)
                 .collect(Collectors.toList());
+        
         return ResponseEntity.ok(response);
     }
 

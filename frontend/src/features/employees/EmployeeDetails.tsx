@@ -30,8 +30,7 @@ type Department = {
 
 type Manager = {
     id: number;
-    firstName: string;
-    lastName: string;
+    name: string;
 };
 
 type Props = {
@@ -94,6 +93,13 @@ export default function EmployeeDetails({ token }: Props) {
     };
     
     useEffect(() => {
+        // Redirect non-admin users away from the new employee page
+        if (isNewEmployee && user?.role !== 'ADMIN') {
+            toast.error("You don't have permission to create new employees");
+            navigate('/employees');
+            return;
+        }
+        
         const fetchDepartments = async () => {
             try {
                 const response = await axios.get('http://localhost:8080/api/departments', {
@@ -111,7 +117,7 @@ export default function EmployeeDetails({ token }: Props) {
         
         const fetchManagers = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/api/employees?role=MANAGER,ADMIN', {
+                const response = await axios.get('http://localhost:8080/api/employees', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -119,8 +125,7 @@ export default function EmployeeDetails({ token }: Props) {
                 
                 setManagers(response.data.map((manager: any) => ({
                     id: manager.id,
-                    firstName: manager.firstName,
-                    lastName: manager.lastName
+                    name: `${manager.firstName} ${manager.lastName}`
                 })));
             } catch (err) {
                 console.error('Error fetching managers:', err);
@@ -572,7 +577,7 @@ export default function EmployeeDetails({ token }: Props) {
                                             .filter(manager => manager.id !== employee.id) // Can't be own manager
                                             .map(manager => (
                                                 <SelectItem key={manager.id} value={manager.id.toString()}>
-                                                    {manager.firstName} {manager.lastName}
+                                                    {manager.name}
                                                 </SelectItem>
                                             ))}
                                     </SelectContent>

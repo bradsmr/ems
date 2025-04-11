@@ -30,7 +30,22 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Optional<Employee> findById(Long id) {
-        return employeeRepository.findById(id);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Employee currentUser = employeeRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+        
+        // Admin can view any employee
+        if (currentUser.getRole() == Role.ADMIN) {
+            return employeeRepository.findById(id);
+        }
+        
+        // Users can view themselves
+        if (currentUser.getId().equals(id)) {
+            return employeeRepository.findById(id);
+        }
+        
+        // Access denied - return empty
+        return Optional.empty();
     }
 
     @Override
@@ -42,13 +57,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (currentUser.getRole() == Role.ADMIN) {
             return employeeRepository.findAll();
         } else {
-            // Regular employees can only view themselves and their manager
-            if (currentUser.getRole() == Role.EMPLOYEE) {
-                return employeeRepository.findAll().stream()
-                        .filter(emp -> emp.equals(currentUser) || emp.equals(currentUser.getManager()))
-                        .collect(Collectors.toList());
-            }
-            return employeeRepository.findAll();
+            // Regular employees can only view themselves
+            return employeeRepository.findAll().stream()
+                    .filter(emp -> emp.equals(currentUser))
+                    .collect(Collectors.toList());
         }
     }
 
