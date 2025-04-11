@@ -21,6 +21,12 @@ type Props = {
     token: string
 }
 
+/**
+ * DepartmentDetails component: Handles department details, including editing and deleting.
+ * 
+ * This component fetches department data and allows authorized users to edit department information.
+ * It also includes a delete functionality for authorized users.
+ */
 export default function DepartmentDetails({token}: Props) {
     const {id} = useParams<{ id: string }>();
     const navigate = useNavigate()
@@ -42,9 +48,9 @@ export default function DepartmentDetails({token}: Props) {
     const [initialDepartment, setInitialDepartment] = useState<Department | null>(null)
     const [hasChanges, setHasChanges] = useState(false)
     
+    // Permission checks
     // Only admins can edit departments
     const canEdit = user?.role === "ADMIN"
-    
     // Only admins can delete departments
     const canDelete = user?.role === "ADMIN"
     
@@ -99,50 +105,43 @@ export default function DepartmentDetails({token}: Props) {
         setError(null)
         
         try {
-            // For new departments, don't send an ID
-            const payload = isNewDepartment
-                ? {
-                    name: department.name,
-                    description: department.description || ""
-                  }
-                : {
-                    id: Number(id), // Use the ID from the URL for updates
-                    name: department.name,
-                    description: department.description || ""
-                  }
-            
-            console.log("Department payload:", payload)
+            let payload;
+            let response;
             
             if (isNewDepartment) {
-                await axios.post("http://localhost:8080/api/departments", payload, {
+                // New department payload
+                payload = {
+                    name: department.name,
+                    description: department.description
+                };
+                
+                response = await axios.post("http://localhost:8080/api/departments", payload, {
                     headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${token}`
                     }
-                })
+                });
                 
-                toast.success("Department created", {
-                    description: "The new department has been created successfully.",
-                    duration: 5000
-                })
-                
-                navigate("/departments")
+                toast.success("Department created successfully!");
+                navigate(`/departments/${response.data.id}`);
             } else {
-                await axios.put(`http://localhost:8080/api/departments/${id}`, payload, {
+                // Update existing department
+                payload = {
+                    id: Number(id),
+                    name: department.name,
+                    description: department.description
+                };
+                
+                response = await axios.put(`http://localhost:8080/api/departments/${id}`, payload, {
                     headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${token}`
                     }
-                })
+                });
                 
-                toast.success("Department updated", {
-                    description: "The department has been updated successfully.",
-                    duration: 5000
-                })
-                
-                navigate("/departments")
+                setInitialDepartment(JSON.parse(JSON.stringify(response.data)));
+                setHasChanges(false);
+                toast.success("Department updated successfully!");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error saving department:", err)
             setError("Failed to save department")
             
@@ -164,27 +163,20 @@ export default function DepartmentDetails({token}: Props) {
     }
     
     const handleDelete = async () => {
-        setDeleting(true)
+        setDeleting(true);
+        setError(null);
         
         try {
             await axios.delete(`http://localhost:8080/api/departments/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
-            })
+            });
             
-            // Close the dialog
-            setShowDeleteDialog(false)
-            
-            // Show success message
-            toast.success("Department deleted", {
-                description: "The department has been deleted successfully. Any employees assigned to this department have been updated.",
-                duration: 5000
-            })
-            
-            // Navigate back to the departments list
-            navigate("/departments")
-        } catch (err) {
+            setShowDeleteDialog(false);
+            toast.success("Department deleted successfully!");
+            navigate("/departments");
+        } catch (err: any) {
             console.error("Error deleting department:", err)
             
             // Show error message using toast, not in the dialog
@@ -209,7 +201,6 @@ export default function DepartmentDetails({token}: Props) {
                 })
             }
             
-            // Close the dialog on error too
             setShowDeleteDialog(false)
         } finally {
             setDeleting(false)

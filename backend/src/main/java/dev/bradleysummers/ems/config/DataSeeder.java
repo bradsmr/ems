@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -20,13 +21,13 @@ public class DataSeeder implements CommandLineRunner {
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // Set to track used email addresses
+    // Set of email addresses already in use
     private final Set<String> usedEmails = new HashSet<>();
 
     @Override
     public void run(String... args) throws Exception {
         if (departmentRepository.count() == 0 && employeeRepository.count() == 0) {
-            // A much larger list of first and last names to enable unique combinations
+            // Names for generating test data
             List<String> firstNames = List.of(
                     "James", "Emily", "Michael", "Sarah", "John", "Jessica", "Robert", "Ashley",
                     "David", "Amanda", "William", "Jennifer", "Joseph", "Elizabeth", "Charles",
@@ -49,7 +50,7 @@ public class DataSeeder implements CommandLineRunner {
                     "Peterson", "Cooper", "Reed", "Bailey", "Bell", "Gomez", "Kelly", "Howard"
             );
 
-            // Create departments
+            // Create departments with descriptions
             Department engineering = departmentRepository.save(new Department(null, "Engineering", "Software & Platform"));
             Department hr = departmentRepository.save(new Department(null, "HR", "People Ops"));
             Department sales = departmentRepository.save(new Department(null, "Sales", "Revenue"));
@@ -59,7 +60,7 @@ public class DataSeeder implements CommandLineRunner {
 
             List<Department> departments = List.of(engineering, hr, sales, marketing, finance, operations);
 
-            // Create admin
+            // Create admin user
             String adminEmail = "admin@initech.com";
             usedEmails.add(adminEmail);
             employeeRepository.save(Employee.builder()
@@ -72,7 +73,7 @@ public class DataSeeder implements CommandLineRunner {
                     .department(engineering)
                     .build());
 
-            // Create department managers
+            // Create department managers for each department
             List<Employee> managers = new ArrayList<>();
             for (Department dept : departments) {
                 String managerEmail = dept.getName().toLowerCase() + ".manager@initech.com";
@@ -93,11 +94,11 @@ public class DataSeeder implements CommandLineRunner {
             List<Employee> seededEmployees = new ArrayList<>();
             Random random = new Random();
 
-            // Seed employees with unique name combinations to create unique emails
+            // Create regular employees with department managers
             for (int i = 0; i < 25; i++) {
                 Department dept = departments.get(random.nextInt(departments.size()));
 
-                // Keep trying name combinations until we find one that produces a unique email
+                // Generate unique email address
                 String firstName;
                 String lastName;
                 String email;
@@ -110,7 +111,7 @@ public class DataSeeder implements CommandLineRunner {
 
                 usedEmails.add(email);
 
-                // Select a manager from the same department
+                // Assign manager from the same department
                 Employee deptManager = managers.stream()
                         .filter(m -> m.getDepartment().getId().equals(dept.getId()))
                         .findFirst()
@@ -130,11 +131,11 @@ public class DataSeeder implements CommandLineRunner {
                 seededEmployees.add(employeeRepository.save(employee));
             }
 
-            // After seeding initial employees, add more with managers from the employee pool
+            // Create additional employees with managers from the employee pool
             for (int i = 0; i < 25; i++) {
                 Department dept = departments.get(random.nextInt(departments.size()));
 
-                // Keep trying name combinations until we find one that produces a unique email
+                // Generate unique email address
                 String firstName;
                 String lastName;
                 String email;
@@ -147,23 +148,20 @@ public class DataSeeder implements CommandLineRunner {
 
                 usedEmails.add(email);
 
-                // Filter potential managers for this department
+                // Create a list of potential managers for this department
                 List<Employee> potentialManagers = new ArrayList<>();
-                for (Employee e : seededEmployees) {
-                    if (e.getDepartment().getId().equals(dept.getId())) {
-                        potentialManagers.add(e);
-                    }
-                }
+                potentialManagers.addAll(managers.stream()
+                        .filter(m -> m.getDepartment().getId().equals(dept.getId()))
+                        .collect(Collectors.toList()));
+                potentialManagers.addAll(seededEmployees.stream()
+                        .filter(e -> e.getDepartment().getId().equals(dept.getId()))
+                        .limit(5)
+                        .collect(Collectors.toList()));
 
-                // Fallback to department manager if needed
-                if (potentialManagers.isEmpty()) {
-                    potentialManagers.add(managers.stream()
-                            .filter(m -> m.getDepartment().getId().equals(dept.getId()))
-                            .findFirst()
-                            .orElse(managers.get(0)));
-                }
-
-                Employee manager = potentialManagers.get(random.nextInt(potentialManagers.size()));
+                // Select a random manager from the potential managers
+                Employee manager = potentialManagers.isEmpty()
+                        ? null
+                        : potentialManagers.get(random.nextInt(potentialManagers.size()));
 
                 Employee employee = Employee.builder()
                         .email(email)

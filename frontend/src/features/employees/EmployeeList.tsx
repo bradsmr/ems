@@ -93,14 +93,21 @@ const columns: ColumnDef<Employee>[] = [
         enableSorting: true,
     },
     {
-        accessorKey: "manager",
+        // Use a computed accessor for manager sorting
+        id: "manager",
         header: "Manager",
         enableSorting: true,
+        accessorFn: (row) => {
+            const manager = row.manager;
+            if (!manager) return ""; // Empty string for null managers
+            // Format as "FirstName LastName" for consistent sorting
+            return `${manager.firstName} ${manager.lastName}`;
+        },
         cell: ({row}) => {
-            const manager = row.getValue("manager") as Employee["manager"]
-            if (!manager) return "-"
+            const manager = row.original.manager;
+            if (!manager) return "-";
             
-            const navigate = useNavigate()
+            const navigate = useNavigate();
             return (
                 <Button
                     variant="link"
@@ -109,7 +116,7 @@ const columns: ColumnDef<Employee>[] = [
                 >
                     {`${manager.firstName} ${manager.lastName}`}
                 </Button>
-            )
+            );
         },
     },
     {
@@ -140,6 +147,13 @@ const columns: ColumnDef<Employee>[] = [
     },
 ]
 
+/**
+ * EmployeeList component: Displays a list of employees with filtering and sorting capabilities.
+ * 
+ * This component fetches all employees and implements role-based access control:
+ * - ADMIN/MANAGER roles can view all employees
+ * - EMPLOYEE role can only view themselves and their manager
+ */
 export default function EmployeeList({token}: Props) {
     const [employees, setEmployees] = useState<Employee[]>([])
     const [loading, setLoading] = useState(true)

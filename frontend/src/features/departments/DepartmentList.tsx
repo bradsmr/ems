@@ -70,6 +70,12 @@ const columns: ColumnDef<Department>[] = [
     },
 ]
 
+/**
+ * DepartmentList component: Displays a list of departments with filtering and sorting capabilities.
+ * 
+ * This component fetches all departments and allows users to view department details.
+ * Only admin users can create new departments or edit existing ones.
+ */
 export default function DepartmentList({token}: Props) {
     const [departments, setDepartments] = useState<Department[]>([])
     const [loading, setLoading] = useState(true)

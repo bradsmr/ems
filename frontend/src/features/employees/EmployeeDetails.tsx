@@ -38,6 +38,12 @@ type Props = {
     token: string;
 };
 
+/**
+ * EmployeeDetails component: Handles employee details, including editing and deleting.
+ * 
+ * This component fetches employee data, departments, and managers, and allows authorized users to edit employee information.
+ * It also includes a delete functionality for authorized users.
+ */
 export default function EmployeeDetails({ token }: Props) {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -65,26 +71,25 @@ export default function EmployeeDetails({ token }: Props) {
     const [initialEmployee, setInitialEmployee] = useState<Employee | null>(null);
     const [hasChanges, setHasChanges] = useState(false);
     
-    // Determine if the current user can edit this employee
+    // Permission checks
     const canEdit = user?.role === 'ADMIN' || 
-                   (user?.role === 'MANAGER' && employee.managerId === user.id) || 
-                   (user?.id === employee.id);
-                   
-    // Determine if the current user can edit all fields or just password
-    const canEditAllFields = user?.role === 'ADMIN';
+                   user?.id === Number(id) || 
+                   user?.id === employee.managerId;
     
-    // Determine if the current user can delete this employee
-    const canDelete = user?.role === 'ADMIN' && user.id !== employee.id;
-
+    // Admin or self can edit all fields, managers can only edit some fields
+    const canEditAllFields = user?.role === 'ADMIN' || user?.id === Number(id);
+    
+    // Only admins can delete employees
+    const canDelete = user?.role === 'ADMIN' && user?.id !== Number(id);
+    
     // Check if user has permission to view this employee
     const canView = () => {
-        if (!user) return false;
-        if (user.role === 'ADMIN') return true;
-        if (user.id === Number(id)) return true; // Self
-        if (user.id === employee.managerId) return true; // Manager of this employee
-        if (employee.managerId === user.id) return true; // This is user's manager
+        if (user?.role === 'ADMIN') return true;
+        if (user?.id === Number(id)) return true; // Self
+        if (user?.id === employee.managerId) return true; // Manager of this employee
+        if (employee.managerId === user?.id) return true; // This is user's manager
         
-        // Check if in same department (would need to fetch user's department)
+        // Same department check would go here if needed
         return false;
     };
     
@@ -201,16 +206,18 @@ export default function EmployeeDetails({ token }: Props) {
         return Object.keys(errors).length === 0;
     };
     
+    // Format payload for API request
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!validateForm()) return;
+        if (!validateForm()) {
+            return;
+        }
         
         setSaving(true);
-        setError(null);
         
         try {
-            // Format the payload according to what the backend expects
+            // Create payload structure for backend API
             const payload = {
                 firstName: employee.firstName,
                 lastName: employee.lastName,
@@ -218,11 +225,11 @@ export default function EmployeeDetails({ token }: Props) {
                 password: employee.password,
                 role: employee.role,
                 active: employee.active,
-                // The backend expects a department object with an id
+                // Department as object with ID
                 department: {
                     id: employee.departmentId
                 },
-                // Manager is just the ID
+                // Manager reference by ID
                 managerId: employee.managerId || null
             };
             
@@ -308,12 +315,12 @@ export default function EmployeeDetails({ token }: Props) {
         setEmployee(prev => {
             const updatedEmployee = { ...prev, [name]: value };
             
-            // Check if there are any changes compared to the initial data
+            // Track changes for conditional update button
             if (initialEmployee && !isNewEmployee) {
                 const normalizedInitial = { ...initialEmployee } as any;
                 const normalizedCurrent = { ...updatedEmployee } as any;
                 
-                // Convert string values to appropriate types for comparison
+                // Convert values to appropriate types for comparison
                 if (name === 'active') {
                     normalizedCurrent.active = value === 'true';
                 }
@@ -321,12 +328,12 @@ export default function EmployeeDetails({ token }: Props) {
                     normalizedCurrent[name] = value ? Number(value) : undefined;
                 }
                 
-                // Compare the current state with initial state
+                // Determine if any fields have changed
                 const hasAnyChanges = Object.keys(normalizedCurrent).some(key => {
-                    // Skip password field if empty (not being changed)
+                    // Skip empty password field
                     if (key === 'password' && !normalizedCurrent[key]) return false;
                     
-                    // Skip id field
+                    // Skip id comparison
                     if (key === 'id') return false;
                     
                     return JSON.stringify(normalizedCurrent[key]) !== 
@@ -335,7 +342,7 @@ export default function EmployeeDetails({ token }: Props) {
                 
                 setHasChanges(hasAnyChanges);
             } else if (isNewEmployee) {
-                // For new employees, check if required fields are filled
+                // For new employees, check required fields
                 const requiredFields = ['firstName', 'lastName', 'email', 'password'];
                 const allRequiredFilled = requiredFields.every(field => 
                     updatedEmployee[field as keyof Employee] && 
@@ -367,16 +374,16 @@ export default function EmployeeDetails({ token }: Props) {
             
             const updatedEmployee = { ...prev, [name]: updatedValue };
             
-            // Check if there are any changes compared to the initial data
+            // Track changes for conditional update button
             if (initialEmployee && !isNewEmployee) {
                 const normalizedInitial = { ...initialEmployee } as any;
                 const normalizedCurrent = { ...updatedEmployee } as any;
                 
                 const hasAnyChanges = Object.keys(updatedEmployee).some(key => {
-                    // Skip password field if empty (not being changed)
+                    // Skip empty password field
                     if (key === 'password' && !normalizedCurrent[key]) return false;
                     
-                    // Skip id field
+                    // Skip id comparison
                     if (key === 'id') return false;
                     
                     return JSON.stringify(normalizedCurrent[key]) !== 
@@ -436,7 +443,7 @@ export default function EmployeeDetails({ token }: Props) {
                     </AlertDialog>
                 )}
             </CardHeader>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} autoComplete="off">
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -480,6 +487,7 @@ export default function EmployeeDetails({ token }: Props) {
                             onChange={handleInputChange}
                             disabled={!canEditAllFields}
                             className={formErrors.email ? 'border-red-500' : ''}
+                            autoComplete="new-email"
                         />
                         {formErrors.email && (
                             <p className="text-sm text-red-500">{formErrors.email}</p>
@@ -499,6 +507,7 @@ export default function EmployeeDetails({ token }: Props) {
                             disabled={!canEdit}
                             placeholder={!isNewEmployee ? "Leave blank to keep current password" : ""}
                             className={formErrors.password ? 'border-red-500' : ''}
+                            autoComplete="new-password"
                         />
                         {formErrors.password && (
                             <p className="text-sm text-red-500">{formErrors.password}</p>

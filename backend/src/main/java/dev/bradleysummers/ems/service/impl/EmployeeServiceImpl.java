@@ -24,11 +24,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public Employee create(Employee employee) {
         // Encrypt password before saving
-        if (employee.getPassword() != null && !employee.getPassword().isEmpty()) {
-            employee.setPassword(passwordEncoder.encode(employee.getPassword()));
-        }
-        
-        validateManager(employee, employee.getManager());
+        employee.setPassword(passwordEncoder.encode(employee.getPassword()));
         return employeeRepository.save(employee);
     }
 
@@ -46,10 +42,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (currentUser.getRole() == Role.ADMIN) {
             return employeeRepository.findAll();
         } else {
-            // Regular employees can only see themselves and their manager
-            return employeeRepository.findAll().stream()
-                    .filter(emp -> emp.equals(currentUser) || emp.equals(currentUser.getManager()))
-                    .collect(Collectors.toList());
+            // Regular employees can only view themselves and their manager
+            if (currentUser.getRole() == Role.EMPLOYEE) {
+                return employeeRepository.findAll().stream()
+                        .filter(emp -> emp.equals(currentUser) || emp.equals(currentUser.getManager()))
+                        .collect(Collectors.toList());
+            }
+            return employeeRepository.findAll();
         }
     }
 

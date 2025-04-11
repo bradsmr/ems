@@ -13,6 +13,7 @@ import {
     SortingState,
     useReactTable,
     VisibilityState,
+    Updater,
 } from "@tanstack/react-table"
 import {Button} from "@/components/ui/button.tsx"
 import {Input} from "@/components/ui/input.tsx"
@@ -84,6 +85,12 @@ export function DataTable<TData>({
     const [currentPageSize, setCurrentPageSize] = useState(initialPageSize)
     const [pageIndex, setPageIndex] = useState(0)
 
+    // Custom sorting handler to maintain pagination
+    const handleSortingChange = (updaterOrValue: Updater<SortingState>) => {
+        setSorting(updaterOrValue);
+        // Don't reset page index when sorting changes
+    }
+
     const table = useReactTable({
         data,
         columns,
@@ -91,7 +98,7 @@ export function DataTable<TData>({
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        onSortingChange: setSorting,
+        onSortingChange: handleSortingChange,
         onColumnFiltersChange: setColumnFilters,
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
@@ -112,6 +119,8 @@ export function DataTable<TData>({
                 pageIndex: pageIndex,
             },
         },
+        // Prevent auto-reset of pagination when sorting changes
+        autoResetPageIndex: false,
     })
 
     if (loading) {
