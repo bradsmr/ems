@@ -19,6 +19,7 @@ type Employee = {
     password: string;
     role: string;
     active: boolean;
+    jobTitle: string;
     departmentId: number;
     managerId?: number;
 };
@@ -57,6 +58,7 @@ export default function EmployeeDetails({ token }: Props) {
         password: '',
         role: 'EMPLOYEE',
         active: true,
+        jobTitle: '',
         departmentId: 0,
         managerId: undefined
     });
@@ -230,6 +232,7 @@ export default function EmployeeDetails({ token }: Props) {
                 password: employee.password,
                 role: employee.role,
                 active: employee.active,
+                jobTitle: employee.jobTitle,
                 // Department as object with ID
                 department: {
                     id: employee.departmentId
@@ -402,6 +405,10 @@ export default function EmployeeDetails({ token }: Props) {
         });
     };
     
+    const handleBack = () => {
+        navigate('/employees');
+    };
+    
     if (loading) {
         return <div className="text-center py-10">Loading employee details...</div>;
     }
@@ -411,218 +418,247 @@ export default function EmployeeDetails({ token }: Props) {
     }
     
     return (
-        <Card className="max-w-2xl mx-auto">
-            <CardHeader className="relative">
-                <CardTitle>
-                    {isNewEmployee ? 'New Employee' : `${employee.firstName} ${employee.lastName}`}
-                </CardTitle>
-                <CardDescription>
-                    {isNewEmployee ? 'Create a new employee' : employee.email}
-                </CardDescription>
-                
-                {canDelete && !isNewEmployee && (
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="absolute top-4 right-4 text-gray-500 hover:text-red-600 hover:bg-transparent"
-                            >
-                                <Trash2 className="h-5 w-5" />
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the employee.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                                    Delete
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                )}
-            </CardHeader>
-            <form onSubmit={handleSubmit} autoComplete="off">
-                <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="firstName">First Name</Label>
-                            <Input
-                                id="firstName"
-                                name="firstName"
-                                value={employee.firstName}
-                                onChange={handleInputChange}
-                                disabled={!canEditAllFields}
-                                className={formErrors.firstName ? 'border-red-500' : ''}
-                            />
-                            {formErrors.firstName && (
-                                <p className="text-sm text-red-500">{formErrors.firstName}</p>
-                            )}
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <Label htmlFor="lastName">Last Name</Label>
-                            <Input
-                                id="lastName"
-                                name="lastName"
-                                value={employee.lastName}
-                                onChange={handleInputChange}
-                                disabled={!canEditAllFields}
-                                className={formErrors.lastName ? 'border-red-500' : ''}
-                            />
-                            {formErrors.lastName && (
-                                <p className="text-sm text-red-500">{formErrors.lastName}</p>
-                            )}
-                        </div>
-                    </div>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleBack}
+                    className="flex items-center"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+                    Back to Employees
+                </Button>
+            </div>
+            
+            <Card className="w-full max-w-4xl mx-auto">
+                <CardHeader className="relative">
+                    <CardTitle>
+                        {isNewEmployee ? 'New Employee' : `${employee.firstName} ${employee.lastName}`}
+                    </CardTitle>
+                    <CardDescription>
+                        {isNewEmployee ? 'Create a new employee' : employee.email}
+                    </CardDescription>
                     
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={employee.email}
-                            onChange={handleInputChange}
-                            disabled={!canEditAllFields}
-                            className={formErrors.email ? 'border-red-500' : ''}
-                            autoComplete="new-email"
-                        />
-                        {formErrors.email && (
-                            <p className="text-sm text-red-500">{formErrors.email}</p>
-                        )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                        <Label htmlFor="password">
-                            {isNewEmployee ? 'Password' : 'New Password'}
-                        </Label>
-                        <Input
-                            id="password"
-                            name="password"
-                            type="password"
-                            value={employee.password}
-                            onChange={handleInputChange}
-                            disabled={!canEdit}
-                            placeholder={!isNewEmployee ? "Leave blank to keep current password" : ""}
-                            className={formErrors.password ? 'border-red-500' : ''}
-                            autoComplete="new-password"
-                        />
-                        {formErrors.password && (
-                            <p className="text-sm text-red-500">{formErrors.password}</p>
-                        )}
-                    </div>
-                    
-                    {canEditAllFields && (
-                        <>
-                            <div className="space-y-2">
-                                <Label htmlFor="role">Role</Label>
-                                <Select
-                                    value={employee.role}
-                                    onValueChange={(value) => setEmployee(prev => ({ ...prev, role: value }))}
-                                    disabled={!canEditAllFields}
+                    {canDelete && !isNewEmployee && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="absolute top-4 right-4 text-gray-500 hover:text-red-600 hover:bg-transparent"
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a role" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ADMIN">Admin</SelectItem>
-                                        <SelectItem value="EMPLOYEE">Employee</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            
+                                    <Trash2 className="h-5 w-5" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the employee.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                                        Delete
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </CardHeader>
+                <form onSubmit={handleSubmit} autoComplete="off">
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="departmentId">Department</Label>
-                                <Select
-                                    value={employee.departmentId ? employee.departmentId.toString() : ''}
-                                    onValueChange={(value) => handleSelectChange('departmentId', value)}
+                                <Label htmlFor="firstName">First Name</Label>
+                                <Input
+                                    id="firstName"
+                                    name="firstName"
+                                    value={employee.firstName}
+                                    onChange={handleInputChange}
                                     disabled={!canEditAllFields}
-                                >
-                                    <SelectTrigger className={formErrors.departmentId ? 'border-red-500' : ''}>
-                                        <SelectValue placeholder="Select a department" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {departments.map(dept => (
-                                            <SelectItem key={dept.id} value={dept.id.toString()}>
-                                                {dept.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {formErrors.departmentId && (
-                                    <p className="text-sm text-red-500">{formErrors.departmentId}</p>
+                                    className={formErrors.firstName ? 'border-red-500' : ''}
+                                />
+                                {formErrors.firstName && (
+                                    <p className="text-sm text-red-500">{formErrors.firstName}</p>
                                 )}
                             </div>
                             
                             <div className="space-y-2">
-                                <Label htmlFor="managerId">Manager</Label>
-                                <Select
-                                    value={employee.managerId ? employee.managerId.toString() : 'null'}
-                                    onValueChange={(value) => handleSelectChange('managerId', value)}
+                                <Label htmlFor="lastName">Last Name</Label>
+                                <Input
+                                    id="lastName"
+                                    name="lastName"
+                                    value={employee.lastName}
+                                    onChange={handleInputChange}
                                     disabled={!canEditAllFields}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a manager" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="null">No Manager</SelectItem>
-                                        {managers
-                                            .filter(manager => manager.id !== employee.id) // Can't be own manager
-                                            .map(manager => (
-                                                <SelectItem key={manager.id} value={manager.id.toString()}>
-                                                    {manager.name}
+                                    className={formErrors.lastName ? 'border-red-500' : ''}
+                                />
+                                {formErrors.lastName && (
+                                    <p className="text-sm text-red-500">{formErrors.lastName}</p>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={employee.email}
+                                onChange={handleInputChange}
+                                disabled={!canEditAllFields}
+                                className={formErrors.email ? 'border-red-500' : ''}
+                                autoComplete="new-email"
+                            />
+                            {formErrors.email && (
+                                <p className="text-sm text-red-500">{formErrors.email}</p>
+                            )}
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label htmlFor="password">
+                                {isNewEmployee ? 'Password' : 'New Password'}
+                            </Label>
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                value={employee.password}
+                                onChange={handleInputChange}
+                                disabled={!canEdit}
+                                placeholder={!isNewEmployee ? "Leave blank to keep current password" : ""}
+                                className={formErrors.password ? 'border-red-500' : ''}
+                                autoComplete="new-password"
+                            />
+                            {formErrors.password && (
+                                <p className="text-sm text-red-500">{formErrors.password}</p>
+                            )}
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label htmlFor="jobTitle">Job Title</Label>
+                            <Input
+                                id="jobTitle"
+                                name="jobTitle"
+                                value={employee.jobTitle}
+                                onChange={handleInputChange}
+                                disabled={!canEditAllFields}
+                                className={formErrors.jobTitle ? 'border-red-500' : ''}
+                            />
+                            {formErrors.jobTitle && (
+                                <p className="text-sm text-red-500">{formErrors.jobTitle}</p>
+                            )}
+                        </div>
+                        
+                        {canEditAllFields && (
+                            <>
+                                <div className="space-y-2">
+                                    <Label htmlFor="role">Role</Label>
+                                    <Select
+                                        value={employee.role}
+                                        onValueChange={(value) => setEmployee(prev => ({ ...prev, role: value }))}
+                                        disabled={!canEditAllFields}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ADMIN">Admin</SelectItem>
+                                            <SelectItem value="EMPLOYEE">Employee</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <Label htmlFor="departmentId">Department</Label>
+                                    <Select
+                                        value={employee.departmentId ? employee.departmentId.toString() : ''}
+                                        onValueChange={(value) => handleSelectChange('departmentId', value)}
+                                        disabled={!canEditAllFields}
+                                    >
+                                        <SelectTrigger className={formErrors.departmentId ? 'border-red-500' : ''}>
+                                            <SelectValue placeholder="Select a department" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {departments.map(dept => (
+                                                <SelectItem key={dept.id} value={dept.id.toString()}>
+                                                    {dept.name}
                                                 </SelectItem>
                                             ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <Label htmlFor="active">Status</Label>
-                                <Select
-                                    value={employee.active ? 'true' : 'false'}
-                                    onValueChange={(value) => setEmployee(prev => ({ ...prev, active: value === 'true' }))}
-                                    disabled={!canEditAllFields}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="true">Active</SelectItem>
-                                        <SelectItem value="false">Inactive</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </>
-                    )}
-                </CardContent>
-                
-                <CardFooter className="flex justify-between pt-6 border-t mt-6">
-                    <Button variant="outline" type="button" onClick={() => navigate('/employees')}>
-                        Cancel
-                    </Button>
-                    
-                    <div className="flex gap-2">
-                        {canEdit && (
-                            <Button 
-                                type="submit" 
-                                disabled={saving || !hasChanges} 
-                                onClick={handleSubmit}
-                                className={`${hasChanges ? 'bg-[#3CB371] hover:bg-[#2E8B57]' : 'bg-gray-400 cursor-not-allowed'}`}
-                            >
-                                {saving ? 'Saving...' : (isNewEmployee ? 'Create' : 'Update')}
-                            </Button>
+                                        </SelectContent>
+                                    </Select>
+                                    {formErrors.departmentId && (
+                                        <p className="text-sm text-red-500">{formErrors.departmentId}</p>
+                                    )}
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <Label htmlFor="managerId">Manager</Label>
+                                    <Select
+                                        value={employee.managerId ? employee.managerId.toString() : 'null'}
+                                        onValueChange={(value) => handleSelectChange('managerId', value)}
+                                        disabled={!canEditAllFields}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a manager" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="null">No Manager</SelectItem>
+                                            {managers
+                                                .filter(manager => manager.id !== employee.id) // Can't be own manager
+                                                .map(manager => (
+                                                    <SelectItem key={manager.id} value={manager.id.toString()}>
+                                                        {manager.name}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <Label htmlFor="active">Status</Label>
+                                    <Select
+                                        value={employee.active ? 'true' : 'false'}
+                                        onValueChange={(value) => setEmployee(prev => ({ ...prev, active: value === 'true' }))}
+                                        disabled={!canEditAllFields}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="true">Active</SelectItem>
+                                            <SelectItem value="false">Inactive</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </>
                         )}
-                    </div>
-                </CardFooter>
-            </form>
-        </Card>
+                    </CardContent>
+                    
+                    <CardFooter className="flex justify-between pt-6 border-t mt-6">
+                        <Button variant="outline" type="button" onClick={() => navigate('/employees')}>
+                            Cancel
+                        </Button>
+                        
+                        <div className="flex gap-2">
+                            {canEdit && (
+                                <Button 
+                                    type="submit" 
+                                    disabled={saving || !hasChanges} 
+                                    onClick={handleSubmit}
+                                    className={`${hasChanges ? 'bg-[#3CB371] hover:bg-[#2E8B57]' : 'bg-gray-400 cursor-not-allowed'}`}
+                                >
+                                    {saving ? 'Saving...' : (isNewEmployee ? 'Create' : 'Update')}
+                                </Button>
+                            )}
+                        </div>
+                    </CardFooter>
+                </form>
+            </Card>
+        </div>
     );
 }

@@ -11,6 +11,7 @@ public class EmployeeRequestDto {
     private Role role;
     private String firstName;
     private String lastName;
+    private String jobTitle;
     private DepartmentDto department;
     private Long managerId;
 

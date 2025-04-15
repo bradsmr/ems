@@ -54,6 +54,11 @@ export default function DepartmentDetails({token}: Props) {
     // Only admins can delete departments
     const canDelete = user?.role === "ADMIN"
     
+    // Add a back button handler
+    const handleBack = () => {
+        navigate('/departments');
+    };
+    
     useEffect(() => {
         if (isNewDepartment) {
             setLoading(false)
@@ -251,102 +256,116 @@ export default function DepartmentDetails({token}: Props) {
     }
     
     return (
-        <Card className="max-w-2xl mx-auto">
-            <CardHeader className="relative">
-                <CardTitle>
-                    {isNewDepartment ? 'New Department' : department.name}
-                </CardTitle>
-                <CardDescription>
-                    {isNewDepartment ? 'Create a new department' : 'Department details and management'}
-                </CardDescription>
-                
-                {canDelete && !isNewDepartment && (
-                    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                        <AlertDialogTrigger asChild>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="absolute top-4 right-4 text-gray-500 hover:text-red-600 hover:bg-transparent"
-                            >
-                                <Trash2 className="h-5 w-5" />
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the department.
-                                    Any employees assigned to this department will be updated to have no department.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                    onClick={handleDelete} 
-                                    disabled={deleting}
-                                    className="bg-red-600 hover:bg-red-700"
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleBack}
+                    className="flex items-center"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+                    Back to Departments
+                </Button>
+            </div>
+            
+            <Card className="max-w-2xl mx-auto">
+                <CardHeader className="relative">
+                    <CardTitle>
+                        {isNewDepartment ? 'New Department' : department.name}
+                    </CardTitle>
+                    <CardDescription>
+                        {isNewDepartment ? 'Create a new department' : 'Department details and management'}
+                    </CardDescription>
+                    
+                    {canDelete && !isNewDepartment && (
+                        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                            <AlertDialogTrigger asChild>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="absolute top-4 right-4 text-gray-500 hover:text-red-600 hover:bg-transparent"
                                 >
-                                    {deleting ? "Deleting..." : "Delete"}
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                )}
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Department Name</Label>
-                        <Input
-                            id="name"
-                            name="name"
-                            value={department.name}
-                            onChange={handleInputChange}
-                            disabled={!canEdit}
-                            className={formErrors.name ? "border-red-500" : ""}
-                        />
-                        {formErrors.name && (
-                            <p className="text-sm text-red-500">{formErrors.name}</p>
-                        )}
-                    </div>
+                                    <Trash2 className="h-5 w-5" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the department.
+                                        Any employees assigned to this department will be updated to have no department.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                        onClick={handleDelete} 
+                                        disabled={deleting}
+                                        className="bg-red-600 hover:bg-red-700"
+                                    >
+                                        {deleting ? "Deleting..." : "Delete"}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </CardHeader>
+                <form onSubmit={handleSubmit}>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Department Name</Label>
+                            <Input
+                                id="name"
+                                name="name"
+                                value={department.name}
+                                onChange={handleInputChange}
+                                disabled={!canEdit}
+                                className={formErrors.name ? "border-red-500" : ""}
+                            />
+                            {formErrors.name && (
+                                <p className="text-sm text-red-500">{formErrors.name}</p>
+                            )}
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                id="description"
+                                name="description"
+                                value={department.description}
+                                onChange={handleInputChange}
+                                disabled={!canEdit}
+                                rows={4}
+                            />
+                        </div>
+                    </CardContent>
                     
-                    <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea
-                            id="description"
-                            name="description"
-                            value={department.description}
-                            onChange={handleInputChange}
-                            disabled={!canEdit}
-                            rows={4}
-                        />
-                    </div>
-                </CardContent>
-                
-                <CardFooter className="flex justify-between pt-6 border-t mt-6">
-                    <Button 
-                        variant="outline" 
-                        type="button" 
-                        onClick={() => navigate("/departments")}
-                    >
-                        Cancel
-                    </Button>
-                    
-                    <div className="flex gap-2">
-                        {canEdit && (
-                            <Button 
-                                type="submit" 
-                                disabled={saving || !hasChanges}
-                                onClick={handleSubmit}
-                                className={`${hasChanges ? 'bg-[#3CB371] hover:bg-[#2E8B57]' : 'bg-gray-400 cursor-not-allowed'}`}
-                            >
-                                {saving ? "Saving..." : (isNewDepartment ? "Create" : "Update")}
-                            </Button>
-                        )}
-                    </div>
-                </CardFooter>
-            </form>
-        </Card>
+                    <CardFooter className="flex justify-between pt-6 border-t mt-6">
+                        <Button 
+                            variant="outline" 
+                            type="button" 
+                            onClick={() => navigate("/departments")}
+                        >
+                            Cancel
+                        </Button>
+                        
+                        <div className="flex gap-2">
+                            {canEdit && (
+                                <Button 
+                                    type="submit" 
+                                    disabled={saving || !hasChanges}
+                                    onClick={handleSubmit}
+                                    className={`${hasChanges ? 'bg-[#3CB371] hover:bg-[#2E8B57]' : 'bg-gray-400 cursor-not-allowed'}`}
+                                >
+                                    {saving ? "Saving..." : (isNewDepartment ? "Create" : "Update")}
+                                </Button>
+                            )}
+                        </div>
+                    </CardFooter>
+                </form>
+            </Card>
+        </div>
     )
 }

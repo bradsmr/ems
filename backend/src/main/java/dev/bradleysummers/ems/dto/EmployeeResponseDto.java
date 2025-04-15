@@ -11,6 +11,7 @@ public class EmployeeResponseDto {
     private Role role;
     private String firstName;
     private String lastName;
+    private String jobTitle;
     private String createdAt;
     private String updatedAt;
     private DepartmentDto department;

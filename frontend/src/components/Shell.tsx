@@ -214,7 +214,7 @@ export default function Shell({onLogout}: ShellProps) {
                                 <span className="text-sm text-muted-foreground">
                                     {user.firstName} {user.lastName} ({user.email})
                                     {user.role === "ADMIN" && (
-                                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#3CB371] text-white">
+                                        <span className="ml-2 inline-flex items-center px-2 py-0.5 text-xs font-medium text-[#3CB371]">
                                             Admin
                                         </span>
                                     )}

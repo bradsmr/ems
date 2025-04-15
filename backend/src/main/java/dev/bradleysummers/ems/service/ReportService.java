@@ -40,6 +40,9 @@ public class ReportService {
                     .department(employee.getDepartment() != null ? employee.getDepartment().getName() : null)
                     .departmentId(employee.getDepartment() != null ? employee.getDepartment().getId() : null)
                     .managerId(employee.getManager() != null ? employee.getManager().getId() : null)
+                    .jobTitle(employee.getJobTitle())
+                    .createdAt(employee.getCreatedAt())
+                    .updatedAt(employee.getUpdatedAt())
                     .subordinates(new ArrayList<>())
                     .build();
             

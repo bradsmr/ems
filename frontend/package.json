@@ -27,6 +27,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.1",
+    "react-to-print": "^3.0.6",
     "react-window": "^1.8.11",
     "react-window-infinite-loader": "^1.0.10",
     "sonner": "^2.0.3",

@@ -15,6 +15,7 @@ type Employee = {
     lastName: string
     email: string
     role: string
+    jobTitle: string
     department: {
         name: string
     }
@@ -23,6 +24,7 @@ type Employee = {
         firstName: string
         lastName: string
         email: string
+        jobTitle: string
     }
 }
 
@@ -85,6 +87,11 @@ const columns: ColumnDef<Employee>[] = [
                 </div>
             )
         },
+    },
+    {
+        accessorKey: "jobTitle",
+        header: "Job Title",
+        enableSorting: true,
     },
     {
         accessorKey: "department.name",
@@ -226,6 +233,7 @@ export default function EmployeeList({token}: Props) {
                     lastName: "Last Name",
                     email: "Email",
                     role: "Role",
+                    jobTitle: "Job Title",
                     "department.name": "Department",
                     manager: "Manager",
                     actions: "Actions"

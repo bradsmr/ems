@@ -17,6 +17,7 @@ public class EmployeeMapper {
                 .role(dto.getRole())
                 .firstName(dto.getFirstName())
                 .lastName(dto.getLastName())
+                .jobTitle(dto.getJobTitle())
                 .department(department)
                 .manager(manager)
                 .build();
@@ -30,6 +31,7 @@ public class EmployeeMapper {
         dto.setRole(employee.getRole());
         dto.setFirstName(employee.getFirstName());
         dto.setLastName(employee.getLastName());
+        dto.setJobTitle(employee.getJobTitle());
         dto.setCreatedAt(employee.getCreatedAt() != null ? employee.getCreatedAt().toString() : null);
         dto.setUpdatedAt(employee.getUpdatedAt() != null ? employee.getUpdatedAt().toString() : null);
 
@@ -48,9 +50,20 @@ public class EmployeeMapper {
             managerDto.setFirstName(manager.getFirstName());
             managerDto.setLastName(manager.getLastName());
             managerDto.setEmail(manager.getEmail());
+            managerDto.setJobTitle(manager.getJobTitle());
             dto.setManager(managerDto);
         }
 
+        return dto;
+    }
+
+    public static EmployeeSummaryDto toSummaryDto(Employee employee) {
+        EmployeeSummaryDto dto = new EmployeeSummaryDto();
+        dto.setId(employee.getId());
+        dto.setFirstName(employee.getFirstName());
+        dto.setLastName(employee.getLastName());
+        dto.setEmail(employee.getEmail());
+        dto.setJobTitle(employee.getJobTitle());
         return dto;
     }
 }

@@ -21,6 +21,7 @@ public class Employee {
     @Column(name = "id")
     private Long id;
 
+    @Builder.Default
     @Column(name = "active")
     private boolean active = true;
 
@@ -39,6 +40,9 @@ public class Employee {
 
     @Column(name = "last_name", nullable = false)
     private String lastName;
+    
+    @Column(name = "job_title")
+    private String jobTitle;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
