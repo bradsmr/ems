@@ -93,7 +93,6 @@ const columns: ColumnDef<Employee>[] = [
         enableSorting: true,
     },
     {
-        // Use a computed accessor for manager sorting
         id: "manager",
         header: "Manager",
         enableSorting: true,

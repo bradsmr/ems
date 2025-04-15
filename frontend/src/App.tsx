@@ -6,6 +6,8 @@ import EmployeeList from "@/features/employees/EmployeeList"
 import EmployeeDetails from "@/features/employees/EmployeeDetails"
 import DepartmentList from "@/features/departments/DepartmentList"
 import DepartmentDetails from "@/features/departments/DepartmentDetails"
+import ReportsDashboard from "@/features/reports/ReportsDashboard"
+import OrgChartReport from "@/features/reports/OrgChartReport"
 import Shell from "@/components/Shell"
 
 export default function App() {
@@ -37,6 +39,8 @@ export default function App() {
                         <Route path="/employees/:id" element={<EmployeeDetails token={token} />} />
                         <Route path="/departments" element={<DepartmentList token={token} />} />
                         <Route path="/departments/:id" element={<DepartmentDetails token={token} />} />
+                        <Route path="/reports" element={<ReportsDashboard token={token} />} />
+                        <Route path="/reports/orgchart" element={<OrgChartReport token={token} />} />
                     </Route>
                 ) : (
                     <Route path="*" element={<Navigate to="/login" />} />

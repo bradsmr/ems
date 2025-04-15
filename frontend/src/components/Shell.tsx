@@ -2,7 +2,7 @@ import React, {PropsWithChildren, useState, useEffect} from "react"
 import {Link, Outlet, useLocation, useNavigate} from "react-router-dom"
 import axios from "axios"
 import {Button} from "@/components/ui/button"
-import {LogOut, Settings, Users, Layers} from "lucide-react"
+import {LogOut, Settings, Users, Layers, BarChart} from "lucide-react"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
 import {Avatar, AvatarFallback} from "@/components/ui/avatar"
 import {
@@ -183,6 +183,14 @@ export default function Shell({onLogout}: ShellProps) {
                     >
                         <Layers className="mr-2 h-5 w-5 text-primary"/>
                         Departments
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        className="justify-start text-foreground hover:bg-muted"
+                        onClick={() => navigate("/reports")}
+                    >
+                        <BarChart className="mr-2 h-5 w-5 text-primary"/>
+                        Reports
                     </Button>
                 </nav>
 
