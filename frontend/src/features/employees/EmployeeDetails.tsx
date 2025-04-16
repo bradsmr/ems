@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Employee = {
     id: number;
@@ -71,6 +72,10 @@ export default function EmployeeDetails({ token }: Props) {
     const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
     const [initialEmployee, setInitialEmployee] = useState<Employee | null>(null);
     const [hasChanges, setHasChanges] = useState(false);
+    const [managerName, setManagerName] = useState<string | null>(null);
+    
+    // Ref to track if data has been loaded
+    const dataLoadedRef = useRef(false);
     
     // Permission checks
     const canEdit = user?.role === 'ADMIN' || 
@@ -78,7 +83,7 @@ export default function EmployeeDetails({ token }: Props) {
                    user?.id === employee.managerId;
     
     // Admin or self can edit all fields, managers can only edit some fields
-    const canEditAllFields = user?.role === 'ADMIN' || user?.id === Number(id);
+    const canEditAllFields = user?.role === 'ADMIN' || (user?.id === Number(id) && user?.role !== 'EMPLOYEE');
     
     // Only admins can delete employees
     const canDelete = user?.role === 'ADMIN' && user?.id !== Number(id);
@@ -95,12 +100,8 @@ export default function EmployeeDetails({ token }: Props) {
     };
     
     useEffect(() => {
-        // Redirect non-admin users away from the new employee page
-        if (isNewEmployee && user?.role !== 'ADMIN') {
-            toast.error("You don't have permission to create new employees");
-            navigate('/employees');
-            return;
-        }
+        // Skip if no token or user, or if data has already been loaded
+        if (!token || !user || dataLoadedRef.current) return;
         
         const fetchDepartments = async () => {
             try {
@@ -125,10 +126,11 @@ export default function EmployeeDetails({ token }: Props) {
                     }
                 });
                 
-                setManagers(response.data.map((manager: any) => ({
+                const managersList = response.data.map((manager: any) => ({
                     id: manager.id,
                     name: `${manager.firstName} ${manager.lastName}`
-                })));
+                }));
+                setManagers(managersList);
             } catch (err) {
                 console.error('Error fetching managers:', err);
                 setError('Failed to load managers');
@@ -151,13 +153,34 @@ export default function EmployeeDetails({ token }: Props) {
                     }
                 });
                 
-                setEmployee({
+                // Create a properly formatted employee object from the API response
+                const employeeData = {
                     ...response.data,
                     password: '', // Don't display actual password
                     departmentId: response.data.department?.id || null,
                     managerId: response.data.manager?.id || null
-                });
-                setInitialEmployee(JSON.parse(JSON.stringify(response.data))); // Deep copy for comparison
+                };
+                
+                // If the employee has a manager that's not in the managers list, add it
+                if (response.data.manager && !managers.some(m => m.id === response.data.manager.id)) {
+                    const manager = response.data.manager;
+                    const newManager = {
+                        id: manager.id,
+                        name: `${manager.firstName} ${manager.lastName}`
+                    };
+                    setManagers(prev => {
+                        // Check if manager already exists in the list to prevent duplicates
+                        if (prev.some(m => m.id === manager.id)) {
+                            return prev;
+                        }
+                        return [...prev, newManager];
+                    });
+                    // Store manager name for display
+                    setManagerName(`${manager.firstName} ${manager.lastName}`);
+                }
+                
+                setEmployee(employeeData);
+                setInitialEmployee(JSON.parse(JSON.stringify(employeeData))); // Deep copy for comparison
                 setHasChanges(false);
                 
                 // Check if user has permission to view this employee
@@ -174,12 +197,22 @@ export default function EmployeeDetails({ token }: Props) {
             }
         };
         
-        if (token && user) {
-            fetchDepartments();
-            fetchManagers();
-            fetchEmployee();
-        }
-    }, [id, token, user, isNewEmployee, navigate]);
+        // Load data only once
+        const loadData = async () => {
+            await Promise.all([
+                fetchDepartments(),
+                fetchManagers()
+            ]);
+            await fetchEmployee();
+            // Mark data as loaded
+            dataLoadedRef.current = true;
+        };
+        
+        loadData();
+        
+    // Only re-run if these dependencies change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, token, user, isNewEmployee]);
     
     const validateForm = () => {
         const errors: {[key: string]: string} = {};
@@ -209,6 +242,11 @@ export default function EmployeeDetails({ token }: Props) {
             errors.departmentId = 'Department is required';
         }
         
+        // Prevent admin from setting themselves inactive
+        if (user?.role === 'ADMIN' && user?.id === Number(id) && !employee.active) {
+            errors.active = 'Admins cannot set themselves as inactive';
+        }
+        
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -229,19 +267,15 @@ export default function EmployeeDetails({ token }: Props) {
                 firstName: employee.firstName,
                 lastName: employee.lastName,
                 email: employee.email,
-                password: employee.password,
+                password: employee.password || null,
                 role: employee.role,
                 active: employee.active,
                 jobTitle: employee.jobTitle,
-                // Department as object with ID
                 department: {
                     id: employee.departmentId
                 },
-                // Manager reference by ID
                 managerId: employee.managerId || null
             };
-            
-            console.log('Sending payload:', payload);
             
             if (isNewEmployee) {
                 await axios.post('http://localhost:8080/api/employees', payload, {
@@ -270,6 +304,7 @@ export default function EmployeeDetails({ token }: Props) {
             }
         } catch (error) {
             console.error("Error saving employee:", error);
+            // Consolidate error handling to prevent double toasts
             if (axios.isAxiosError(error) && error.response) {
                 console.error("Response data:", error.response.data);
                 toast.error('Error saving employee', {
@@ -374,11 +409,17 @@ export default function EmployeeDetails({ token }: Props) {
         }
         
         setEmployee(prev => {
-            const updatedValue = name === 'departmentId' || name === 'managerId' 
-                ? (value ? Number(value) : undefined) 
-                : name === 'active' 
-                    ? value === 'true' 
-                    : value;
+            // Special handling for managerId
+            let updatedValue;
+            if (name === 'managerId') {
+                updatedValue = value === 'none' ? undefined : value ? Number(value) : undefined;
+            } else {
+                updatedValue = name === 'departmentId' 
+                    ? (value ? Number(value) : undefined) 
+                    : name === 'active' 
+                        ? value === 'true' 
+                        : value;
+            }
             
             const updatedEmployee = { ...prev, [name]: updatedValue };
             
@@ -554,6 +595,60 @@ export default function EmployeeDetails({ token }: Props) {
                             )}
                         </div>
                         
+                        <div className="space-y-2">
+                            <Label htmlFor="departmentId">Department</Label>
+                            <Select
+                                value={employee.departmentId ? employee.departmentId.toString() : ''}
+                                onValueChange={(value) => handleSelectChange('departmentId', value)}
+                                disabled={!canEditAllFields}
+                            >
+                                <SelectTrigger className={formErrors.departmentId ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Select a department" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {departments.map(dept => (
+                                        <SelectItem key={dept.id} value={dept.id.toString()}>
+                                            {dept.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {formErrors.departmentId && (
+                                <p className="text-sm text-red-500">{formErrors.departmentId}</p>
+                            )}
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label htmlFor="managerId">Manager</Label>
+                            <Select
+                                value={employee.managerId ? employee.managerId.toString() : 'none'}
+                                onValueChange={(value) => handleSelectChange('managerId', value === 'none' ? '' : value)}
+                                disabled={!canEditAllFields}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue>
+                                        {employee.managerId 
+                                            ? (managers.find(m => m.id === employee.managerId)?.name || managerName || 'Loading...') 
+                                            : 'No Manager'}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">No Manager</SelectItem>
+                                    {managers
+                                        .filter(manager => manager.id !== employee.id) // Can't be own manager
+                                        // Remove duplicates before mapping
+                                        .filter((manager, index, self) => 
+                                            index === self.findIndex(m => m.id === manager.id)
+                                        )
+                                        .map(manager => (
+                                            <SelectItem key={manager.id} value={manager.id.toString()}>
+                                                {manager.name}
+                                            </SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        
                         {canEditAllFields && (
                             <>
                                 <div className="space-y-2">
@@ -574,66 +669,42 @@ export default function EmployeeDetails({ token }: Props) {
                                 </div>
                                 
                                 <div className="space-y-2">
-                                    <Label htmlFor="departmentId">Department</Label>
-                                    <Select
-                                        value={employee.departmentId ? employee.departmentId.toString() : ''}
-                                        onValueChange={(value) => handleSelectChange('departmentId', value)}
-                                        disabled={!canEditAllFields}
-                                    >
-                                        <SelectTrigger className={formErrors.departmentId ? 'border-red-500' : ''}>
-                                            <SelectValue placeholder="Select a department" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {departments.map(dept => (
-                                                <SelectItem key={dept.id} value={dept.id.toString()}>
-                                                    {dept.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {formErrors.departmentId && (
-                                        <p className="text-sm text-red-500">{formErrors.departmentId}</p>
-                                    )}
-                                </div>
-                                
-                                <div className="space-y-2">
-                                    <Label htmlFor="managerId">Manager</Label>
-                                    <Select
-                                        value={employee.managerId ? employee.managerId.toString() : 'null'}
-                                        onValueChange={(value) => handleSelectChange('managerId', value)}
-                                        disabled={!canEditAllFields}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a manager" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="null">No Manager</SelectItem>
-                                            {managers
-                                                .filter(manager => manager.id !== employee.id) // Can't be own manager
-                                                .map(manager => (
-                                                    <SelectItem key={manager.id} value={manager.id.toString()}>
-                                                        {manager.name}
-                                                    </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                
-                                <div className="space-y-2">
                                     <Label htmlFor="active">Status</Label>
-                                    <Select
-                                        value={employee.active ? 'true' : 'false'}
-                                        onValueChange={(value) => setEmployee(prev => ({ ...prev, active: value === 'true' }))}
-                                        disabled={!canEditAllFields}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="true">Active</SelectItem>
-                                            <SelectItem value="false">Inactive</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div>
+                                                    <Select
+                                                        value={employee.active ? 'true' : 'false'}
+                                                        onValueChange={(value) => {
+                                                            // Prevent admin from setting themselves inactive
+                                                            if (user?.role === 'ADMIN' && user?.id === Number(id) && value === 'false') {
+                                                                toast.error("Admins cannot set themselves as inactive", {
+                                                                    description: "This would prevent you from accessing the system."
+                                                                });
+                                                                return;
+                                                            }
+                                                            setEmployee(prev => ({ ...prev, active: value === 'true' }));
+                                                        }}
+                                                        disabled={!canEditAllFields || (user?.role === 'ADMIN' && user?.id === Number(id))}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select status" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="true">Active</SelectItem>
+                                                            <SelectItem value="false">Inactive</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </TooltipTrigger>
+                                            {user?.role === 'ADMIN' && user?.id === Number(id) && (
+                                                <TooltipContent side="top" align="start" sideOffset={5}>
+                                                    <p>Admins cannot set themselves as inactive to prevent system lockout.</p>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </div>
                             </>
                         )}
