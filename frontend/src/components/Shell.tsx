@@ -2,7 +2,7 @@ import React, {PropsWithChildren, useState, useEffect} from "react"
 import {Link, Outlet, useLocation, useNavigate} from "react-router-dom"
 import axios from "axios"
 import {Button} from "@/components/ui/button"
-import {LogOut, Settings, Users, Layers, BarChart} from "lucide-react"
+import {LogOut, Settings, Users, Layers, BarChart, Building2} from "lucide-react"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
 import {Avatar, AvatarFallback} from "@/components/ui/avatar"
 import {
@@ -160,10 +160,7 @@ export default function Shell({onLogout}: ShellProps) {
             {/* Sidebar */}
             <aside className="w-56 bg-white border-r border-border flex flex-col p-4">
                 <div className="flex items-center justify-center mb-8">
-                    <svg width="32" height="32" viewBox="0 0 32 32" className="mr-2">
-                        <rect width="32" height="32" rx="8" fill="#3CB371"/>
-                        <path d="M8 16H24M16 8V24" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <Building2 className="h-8 w-8 mr-2 text-[#3CB371]" />
                     <div className="text-xl font-bold tracking-tight text-foreground">Initech EMS</div>
                 </div>
 

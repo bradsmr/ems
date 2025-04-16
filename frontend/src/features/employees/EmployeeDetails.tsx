@@ -655,7 +655,7 @@ export default function EmployeeDetails({ token }: Props) {
                                     <Label htmlFor="role">Role</Label>
                                     <Select
                                         value={employee.role}
-                                        onValueChange={(value) => setEmployee(prev => ({ ...prev, role: value }))}
+                                        onValueChange={(value) => handleSelectChange('role', value)}
                                         disabled={!canEditAllFields}
                                     >
                                         <SelectTrigger>
@@ -684,7 +684,7 @@ export default function EmployeeDetails({ token }: Props) {
                                                                 });
                                                                 return;
                                                             }
-                                                            setEmployee(prev => ({ ...prev, active: value === 'true' }));
+                                                            handleSelectChange('active', value);
                                                         }}
                                                         disabled={!canEditAllFields || (user?.role === 'ADMIN' && user?.id === Number(id))}
                                                     >
