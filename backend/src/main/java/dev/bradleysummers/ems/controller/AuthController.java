@@ -7,6 +7,7 @@ import dev.bradleysummers.ems.entity.Employee;
 import dev.bradleysummers.ems.mapper.EmployeeMapper;
 import dev.bradleysummers.ems.repository.EmployeeRepository;
 import dev.bradleysummers.ems.security.JwtService;
+import dev.bradleysummers.ems.security.LoginAttemptService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -22,19 +23,34 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final EmployeeRepository employeeRepository;
     private final JwtService jwtService;
+    private final LoginAttemptService loginAttemptService;
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody AuthRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
+        String email = request.getEmail();
+        if (loginAttemptService.isBlocked(email)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.TOO_MANY_REQUESTS,
+                "Too many failed login attempts. Please try again later."
+            );
+        }
+        try {
+            Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
+                    email,
+                    request.getPassword()
                 )
-        );
+            );
+            // Success: reset attempts
+            loginAttemptService.loginSucceeded(email);
+        } catch (DisabledException | BadCredentialsException ex) {
+            loginAttemptService.loginFailed(email);
+            throw ex;
+        }
 
         // Get the employee (user)
-        Employee employee = employeeRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Employee employee = employeeRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         // Generate JWT
         String token = jwtService.generateToken(employee.getEmail());

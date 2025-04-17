@@ -11,17 +11,31 @@ interface Props {
 export default function Login({ onLogin }: Props) {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [error, setError] = useState("")
 
     const submit = async (e: FormEvent) => {
         e.preventDefault()
+        setError("")
         try {
             const res = await axios.post("http://localhost:8080/api/auth/login", {
                 email,
                 password,
             })
             onLogin(res.data.token)
-        } catch {
-            alert("Login failed")
+        } catch (err: any) {
+            if (err.response) {
+                if (err.response.status === 401) {
+                    setError("Invalid email or password.")
+                } else if (err.response.status === 403) {
+                    setError("Your account is inactive. Please contact your administrator.")
+                } else if (err.response.status === 429) {
+                    setError("Your account is temporarily locked due to too many failed login attempts. Please try again later.")
+                } else {
+                    setError("Login failed. Please try again.")
+                }
+            } else {
+                setError("Network error. Please try again.")
+            }
         }
     }
 
@@ -61,6 +75,12 @@ export default function Login({ onLogin }: Props) {
                                 required
                             />
                         </div>
+
+                        {error && (
+                            <div className="text-red-600 text-sm font-medium text-center py-1">
+                                {error}
+                            </div>
+                        )}
 
                         <Button type="submit" className="w-full">
                             Login
