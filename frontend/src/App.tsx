@@ -1,7 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom"
 import { Toaster } from "sonner"
+import axios from "axios"
 import Login from "@/features/auth/Login"
+import Setup from "@/features/auth/Setup"
 import EmployeeList from "@/features/employees/EmployeeList"
 import EmployeeDetails from "@/features/employees/EmployeeDetails"
 import DepartmentList from "@/features/departments/DepartmentList"
@@ -12,9 +14,35 @@ import Shell from "@/components/Shell"
 
 export default function App() {
     const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"))
+    const [needsSetup, setNeedsSetup] = useState<boolean | null>(null)
+    const [loading, setLoading] = useState(true)
     const navigate = useNavigate()
 
+    useEffect(() => {
+        const checkSetupStatus = async () => {
+            try {
+                const response = await axios.get("http://localhost:8080/api/setup/status")
+                setNeedsSetup(response.data.needsSetup)
+            } catch (error) {
+                console.error("Failed to check setup status:", error)
+                // If we can't connect, assume we need setup (will be corrected on next load)
+                setNeedsSetup(true)
+            } finally {
+                setLoading(false)
+            }
+        }
+        
+        checkSetupStatus()
+    }, [])
+
     const handleLogin = (newToken: string) => {
+        setToken(newToken)
+        localStorage.setItem("token", newToken)
+        navigate("/employees")
+    }
+
+    const handleSetupComplete = (newToken: string) => {
+        setNeedsSetup(false)
         setToken(newToken)
         localStorage.setItem("token", newToken)
         navigate("/employees")
@@ -26,11 +54,31 @@ export default function App() {
         navigate("/login")
     }
 
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-4 text-muted-foreground">Loading...</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <>
             <Routes>
+                {/* Setup Route */}
+                {needsSetup && (
+                    <Route path="/setup" element={<Setup onSetupComplete={handleSetupComplete} />} />
+                )}
+
                 {/* Public Login Route */}
-                <Route path="/login" element={<Login onLogin={handleLogin} />} />
+                <Route path="/login" element={
+                    needsSetup 
+                        ? <Navigate to="/setup" /> 
+                        : <Login onLogin={handleLogin} />
+                } />
 
                 {/* Protected Routes wrapped in Shell */}
                 {token ? (
@@ -43,11 +91,15 @@ export default function App() {
                         <Route path="/reports/orgchart" element={<OrgChartReport token={token} />} />
                     </Route>
                 ) : (
-                    <Route path="*" element={<Navigate to="/login" />} />
+                    <Route path="*" element={<Navigate to={needsSetup ? "/setup" : "/login"} />} />
                 )}
 
                 {/* Catch-all fallback */}
-                <Route path="*" element={<Navigate to={token ? "/employees" : "/login"} />} />
+                <Route path="*" element={<Navigate to={
+                    needsSetup 
+                        ? "/setup" 
+                        : (token ? "/employees" : "/login")
+                } />} />
             </Routes>
             <Toaster 
                 position="top-center" 

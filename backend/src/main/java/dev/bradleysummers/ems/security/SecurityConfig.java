@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/setup/**").permitAll()
                         // Add specific security rules for department deletion
                         .requestMatchers("/api/departments/*/delete").hasRole("ADMIN")
                         .anyRequest().authenticated()
