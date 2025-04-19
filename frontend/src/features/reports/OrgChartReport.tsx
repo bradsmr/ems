@@ -8,6 +8,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { API_URL } from "@/utils/api";
 
 interface OrgChartNode {
   id: number;
@@ -103,7 +104,7 @@ export default function OrgChartReport({ token: propToken }: Props = {}) {
       
       try {
         // Always fetch all employees regardless of department selection
-        const url = "http://localhost:8080/api/reports/orgchart";
+        const url = `${API_URL}/api/reports/orgchart`;
         
         console.log("Fetching org chart data from:", url);
         
@@ -179,7 +180,7 @@ export default function OrgChartReport({ token: propToken }: Props = {}) {
   useEffect(() => {
     const loadDepartments = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/departments", {
+        const response = await fetch(`${API_URL}/api/departments`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json"

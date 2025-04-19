@@ -8,6 +8,7 @@ import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/compo
 import {DataTable} from "@/components/DataTable.tsx"
 import {Badge} from "@/components/ui/badge"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
+import {API_URL} from "@/utils/api"
 
 type Employee = {
     id: number
@@ -169,7 +170,7 @@ export default function EmployeeList({token}: Props) {
     useEffect(() => {
         const fetchEmployees = async () => {
             try {
-                const response = await fetch("http://localhost:8080/api/employees", {
+                const response = await fetch(`${API_URL}/api/employees`, {
                     headers: {
                         "Authorization": `Bearer ${token}`,
                         "Accept": "application/json"

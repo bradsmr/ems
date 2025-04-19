@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { API_URL } from '../utils/api'
 
 interface Employee {
     id: number
@@ -21,7 +22,7 @@ export function useCurrentUser() {
             return
         }
 
-        axios.get('http://localhost:8080/api/auth/me', {
+        axios.get(`${API_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(response => {

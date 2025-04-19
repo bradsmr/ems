@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom"
 import { Toaster } from "sonner"
 import axios from "axios"
+import { API_URL } from './utils/api';
 import Login from "@/features/auth/Login"
 import Setup from "@/features/auth/Setup"
 import EmployeeList from "@/features/employees/EmployeeList"
@@ -21,7 +22,7 @@ export default function App() {
     useEffect(() => {
         const checkSetupStatus = async () => {
             try {
-                const response = await axios.get("http://localhost:8080/api/setup/status")
+                const response = await axios.get(`${API_URL}/api/setup/status`)
                 setNeedsSetup(response.data.needsSetup)
             } catch (error) {
                 console.error("Failed to check setup status:", error)

@@ -7,6 +7,7 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 import {Badge} from "@/components/ui/badge"
 import {DataTable} from "@/components/DataTable.tsx"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
+import {API_URL} from "@/utils/api"
 
 type Department = {
     id: number
@@ -86,7 +87,7 @@ export default function DepartmentList({token}: Props) {
         const fetchDepartments = async () => {
             try {
                 console.log("Fetching departments from backend...");
-                const response = await fetch("http://localhost:8080/api/departments", {
+                const response = await fetch(`${API_URL}/api/departments`, {
                     headers: {
                         "Authorization": `Bearer ${token}`,
                         "Accept": "application/json"

@@ -11,6 +11,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { API_URL } from '../../utils/api';
 
 type Employee = {
     id: number;
@@ -105,7 +106,7 @@ export default function EmployeeDetails({ token }: Props) {
         
         const fetchDepartments = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/api/departments', {
+                const response = await axios.get(`${API_URL}/api/departments`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -120,7 +121,7 @@ export default function EmployeeDetails({ token }: Props) {
         
         const fetchManagers = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/api/employees', {
+                const response = await axios.get(`${API_URL}/api/employees`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -147,7 +148,7 @@ export default function EmployeeDetails({ token }: Props) {
             setError(null);
             
             try {
-                const response = await axios.get(`http://localhost:8080/api/employees/${id}`, {
+                const response = await axios.get(`${API_URL}/api/employees/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -278,7 +279,7 @@ export default function EmployeeDetails({ token }: Props) {
             };
             
             if (isNewEmployee) {
-                await axios.post('http://localhost:8080/api/employees', payload, {
+                await axios.post(`${API_URL}/api/employees`, payload, {
                     headers: { 
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -290,7 +291,7 @@ export default function EmployeeDetails({ token }: Props) {
                 });
                 navigate("/employees");
             } else {
-                await axios.put(`http://localhost:8080/api/employees/${id}`, payload, {
+                await axios.put(`${API_URL}/api/employees/${id}`, payload, {
                     headers: { 
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -326,7 +327,7 @@ export default function EmployeeDetails({ token }: Props) {
         setError(null);
         
         try {
-            await axios.delete(`http://localhost:8080/api/employees/${id}`, {
+            await axios.delete(`${API_URL}/api/employees/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success('Employee deleted successfully', {

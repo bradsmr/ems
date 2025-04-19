@@ -1,6 +1,7 @@
 import React, {PropsWithChildren, useState, useEffect} from "react"
 import {Link, Outlet, useLocation, useNavigate} from "react-router-dom"
 import axios from "axios"
+import { API_URL } from '../utils/api';
 import {Button} from "@/components/ui/button"
 import {LogOut, Settings, Users, Layers, BarChart, Building2} from "lucide-react"
 import {useCurrentUser} from "@/hooks/useCurrentUser"
@@ -38,12 +39,12 @@ function AppBreadcrumbs() {
                 
                 try {
                     if (paths[0] === "employees") {
-                        const response = await axios.get(`http://localhost:8080/api/employees/${id}`, {
+                        const response = await axios.get(`${API_URL}/api/employees/${id}`, {
                             headers: { Authorization: `Bearer ${token}` }
                         })
                         setEntityName(`${response.data.firstName} ${response.data.lastName}`)
                     } else if (paths[0] === "departments") {
-                        const response = await axios.get(`http://localhost:8080/api/departments/${id}`, {
+                        const response = await axios.get(`${API_URL}/api/departments/${id}`, {
                             headers: { Authorization: `Bearer ${token}` }
                         })
                         setEntityName(response.data.name)
@@ -114,12 +115,12 @@ function PageTitle() {
                 
                 try {
                     if (paths[0] === "employees") {
-                        const response = await axios.get(`http://localhost:8080/api/employees/${id}`, {
+                        const response = await axios.get(`${API_URL}/api/employees/${id}`, {
                             headers: { Authorization: `Bearer ${token}` }
                         })
                         setEntityName(`${response.data.firstName} ${response.data.lastName}`)
                     } else if (paths[0] === "departments") {
-                        const response = await axios.get(`http://localhost:8080/api/departments/${id}`, {
+                        const response = await axios.get(`${API_URL}/api/departments/${id}`, {
                             headers: { Authorization: `Bearer ${token}` }
                         })
                         setEntityName(response.data.name)

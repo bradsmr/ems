@@ -10,6 +10,7 @@ import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} f
 import {useCurrentUser} from "@/hooks/useCurrentUser"
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from "@/components/ui/alert-dialog"
 import { Trash2 } from 'lucide-react'
+import { API_URL } from '../../utils/api';
 
 type Department = {
     id: number
@@ -67,7 +68,7 @@ export default function DepartmentDetails({token}: Props) {
         
         const fetchDepartment = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/api/departments/${id}`, {
+                const response = await axios.get(`${API_URL}/api/departments/${id}`, {
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`
@@ -120,7 +121,7 @@ export default function DepartmentDetails({token}: Props) {
                     description: department.description
                 };
                 
-                response = await axios.post("http://localhost:8080/api/departments", payload, {
+                response = await axios.post(`${API_URL}/api/departments`, payload, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -136,7 +137,7 @@ export default function DepartmentDetails({token}: Props) {
                     description: department.description
                 };
                 
-                response = await axios.put(`http://localhost:8080/api/departments/${id}`, payload, {
+                response = await axios.put(`${API_URL}/api/departments/${id}`, payload, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -172,7 +173,7 @@ export default function DepartmentDetails({token}: Props) {
         setError(null);
         
         try {
-            await axios.delete(`http://localhost:8080/api/departments/${id}`, {
+            await axios.delete(`${API_URL}/api/departments/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

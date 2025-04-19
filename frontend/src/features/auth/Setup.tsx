@@ -3,6 +3,7 @@ import axios from "axios"
 import {Input} from "@/components/ui/input"
 import {Button} from "@/components/ui/button"
 import {Card, CardContent} from "@/components/ui/card"
+import { API_URL } from '../../utils/api';
 
 interface Props {
     onSetupComplete: (token: string) => void
@@ -26,7 +27,7 @@ export default function Setup({onSetupComplete}: Props) {
         }
 
         try {
-            const res = await axios.post("http://localhost:8080/api/setup/initialize", {
+            const res = await axios.post(`${API_URL}/api/setup/initialize`, {
                 firstName,
                 lastName,
                 email,

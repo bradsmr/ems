@@ -1,5 +1,6 @@
 import { useState, FormEvent } from "react"
 import axios from "axios"
+import { API_URL } from '../../utils/api';
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -17,7 +18,7 @@ export default function Login({ onLogin }: Props) {
         e.preventDefault()
         setError("")
         try {
-            const res = await axios.post("http://localhost:8080/api/auth/login", {
+            const res = await axios.post(`${API_URL}/api/auth/login`, {
                 email,
                 password,
             })
