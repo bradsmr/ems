@@ -40,11 +40,7 @@ function ReportCard({ title, description, icon, path }: ReportCardProps) {
   );
 }
 
-interface Props {
-  token: string;
-}
-
-export default function ReportsDashboard({ token }: Props) {
+export default function ReportsDashboard() {
   const reports = [
     {
       id: "orgchart",

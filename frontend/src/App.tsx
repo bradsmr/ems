@@ -88,7 +88,7 @@ export default function App() {
                         <Route path="/employees/:id" element={<EmployeeDetails token={token} />} />
                         <Route path="/departments" element={<DepartmentList token={token} />} />
                         <Route path="/departments/:id" element={<DepartmentDetails token={token} />} />
-                        <Route path="/reports" element={<ReportsDashboard token={token} />} />
+                        <Route path="/reports" element={<ReportsDashboard />} />
                         <Route path="/reports/orgchart" element={<OrgChartReport token={token} />} />
                     </Route>
                 ) : (
