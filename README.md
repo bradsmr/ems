@@ -4,118 +4,37 @@ A full-stack web application for managing employees and departments with role-ba
 
 ![Initech EMS Dashboard](screenshots/dashboard.png)
 
-## Overview
-
-Initech EMS is a modern web application that allows organizations to manage their employee hierarchy and departmental structure. The system features JWT-based authentication, role-based access control, and a responsive UI.
+- Frontend: [https://ems.bradleysummers.dev](https://ems.bradleysummers.dev)
+- Backend API: [https://ems-backend-1-0-0-rc1.onrender.com](https://ems-backend-1-0-0-rc1.onrender.com)
 
 ## Features
 
-- **User Authentication**: Secure login with JWT tokens and encrypted passwords
-- **Role-Based Access Control**: 
-  - ADMIN: Full system access
-  - EMPLOYEE: Can only view themselves
-- **Employee Management**: Create, view, update, and delete employee records
-- **Department Management**: Organize employees by department
-- **Search & Filtering**: Find employees by name, department, or other attributes
-- **Data Validation**: Input validation ensures data integrity
-- **Reporting**: View employee and department data in tabular format with timestamps
-- **Responsive Design**: Modern UI that works across devices
-
-## Architecture
-
-The application follows object-oriented design principles with proper separation of concerns:
-- Service interfaces with specialized implementations
-- Entity models with encapsulated data
-- Component-based frontend architecture
-
-## Data Model
-
-### Department
-- ID (Primary Key)
-- Name (Unique)
-- Description
-
-### Employee
-- ID (Primary Key)
-- Active Status
-- Email (Unique)
-- Password (Encrypted)
-- Role (ADMIN, EMPLOYEE)
-- First Name
-- Last Name
-- Created At (Timestamp)
-- Updated At (Timestamp)
-- Department (Many-to-One relationship)
-- Manager (Self-referential Many-to-One relationship)
-
-## Security & Scalability
-
-- **JWT Authentication**: Stateless token-based security
-- **Password Encryption**: BCrypt hashing for secure storage
-- **Input Sanitization**: Protection against injection attacks
-- **Database-Driven UI**: Components adapt to data changes without code modifications
-- **Pagination**: Efficient handling of large data sets
+- JWT-based authentication with role-based access control (ADMIN and EMPLOYEE roles)
+- Employee management with hierarchical reporting structure
+- Department organization
+- Responsive UI with modern design
+- Organizational chart visualization
 
 ## Tech Stack
 
-- **Frontend**: React, TypeScript, Vite, Shadcn UI components
+- **Frontend**: React, TypeScript, Vite, Shadcn UI
 - **Backend**: Java Spring Boot, Spring Security, JPA/Hibernate
 - **Database**: PostgreSQL
+- **Deployment**: Docker, Render.com, Neon.tech
 
-## Getting Started
+## Local Development
 
-### PostgreSQL Setup
+### Prerequisites
 
-1. **Install PostgreSQL**:
-   - Download and install PostgreSQL from [postgresql.org](https://www.postgresql.org/download/)
-   - During installation, note your password for the postgres user
-
-2. **Create Database**:
-   ```sql
-   CREATE DATABASE ems;
-   CREATE USER ems_user WITH ENCRYPTED PASSWORD 'your_password';
-   GRANT ALL PRIVILEGES ON DATABASE ems TO ems_user;
-   ```
-
-3. **Configure Application**:
-   - Update the database connection settings in `backend/src/main/resources/application.properties` using environment variables:
-   ```properties
-   spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ems}
-   spring.datasource.username=${SPRING_DATASOURCE_USERNAME:ems_user}
-   spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:your_password}
-   spring.jpa.hibernate.ddl-auto=update
-   spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-   ```
-
-   - Set environment variables in your development environment:
-     - Windows (PowerShell):
-       ```powershell
-       $env:SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/ems"
-       $env:SPRING_DATASOURCE_USERNAME="ems_user"
-       $env:SPRING_DATASOURCE_PASSWORD="your_secure_password"
-       $env:FRONTEND_URL="http://localhost:5173"
-       ```
-     - Linux/macOS:
-       ```bash
-       export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/ems"
-       export SPRING_DATASOURCE_USERNAME="ems_user"
-       export SPRING_DATASOURCE_PASSWORD="your_secure_password"
-       export FRONTEND_URL="http://localhost:5173"
-       ```
-
-### First-Time Setup
-
-When you run the application for the first time, you'll be guided through an initial setup process:
-
-1. The system will detect that no admin user exists
-2. You'll be redirected to a setup page where you can create the first admin account
-3. Enter your admin details (name, email, password)
-4. After setup, you'll be logged in automatically and can begin creating departments and employees
+- Java 21
+- Node.js 18+
+- PostgreSQL
 
 ### Backend
 
 ```bash
 cd backend
+# Set environment variables for database connection
 ./mvnw spring-boot:run
 ```
 
@@ -128,3 +47,34 @@ npm run dev
 ```
 
 The application will be available at http://localhost:5173
+
+## Deployment
+
+### Backend (Docker)
+
+```bash
+cd backend
+docker build -t ems-backend .
+docker run -p 8080:8080 -e DATASOURCE_URL="..." -e DATASOURCE_USER="..." -e DATASOURCE_PASSWORD="..." -e FRONTEND_URL="..." ems-backend
+```
+
+### Backend (Render.com)
+
+1. Deploy as a Web Service using Docker
+2. Set required environment variables for database connection
+3. Connect to your PostgreSQL database on Neon.tech
+
+### Frontend (Render.com)
+
+1. Build command: `npm install; npm run build`
+2. Publish directory: `dist`
+3. Add rewrite rule: `/* → /index.html`
+
+### Database (Neon.tech)
+
+Configure permissions:
+```sql
+GRANT ALL ON SCHEMA public TO your_username;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO your_username;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO your_username;
+```
