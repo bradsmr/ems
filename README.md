@@ -2,79 +2,47 @@
 
 A full-stack web application for managing employees and departments with role-based access control.
 
+## Live Demo
+
+[https://ems.bradleysummers.dev](https://ems.bradleysummers.dev)
+
+**Evaluation Credentials**:
+- Email: `wgu-evalation@example.com`
+- Password: `IMik-=qsH4BE^6!#M=^-`
+
 ![Initech EMS Dashboard](screenshots/dashboard.png)
 
-- Frontend: [https://ems.bradleysummers.dev](https://ems.bradleysummers.dev)
-- Backend API: [https://ems-backend-1-0-0-rc1.onrender.com](https://ems-backend-1-0-0-rc1.onrender.com)
+## Overview
 
-## Features
+The Employee Management System (EMS) is designed to help organizations manage their employee hierarchy and departmental structure. The system provides different capabilities based on user roles:
 
-- JWT-based authentication with role-based access control (ADMIN and EMPLOYEE roles)
+- **Administrators** can manage all employees and departments
+- **Employees** can view their own information and organizational structure
+
+## Key Features
+
+- Secure authentication with JWT
 - Employee management with hierarchical reporting structure
 - Department organization
-- Responsive UI with modern design
 - Organizational chart visualization
+- Role-based access control
 
-## Tech Stack
+## Technology
 
-- **Frontend**: React, TypeScript, Vite, Shadcn UI
-- **Backend**: Java Spring Boot, Spring Security, JPA/Hibernate
-- **Database**: PostgreSQL
-- **Deployment**: Docker, Render.com, Neon.tech
+Built with a modern tech stack:
 
-## Local Development
+- React/TypeScript frontend with Shadcn UI components
+- Java Spring Boot backend with JPA/Hibernate
+- PostgreSQL database
+- Cloud hosting: Frontend and backend on Render.com, database on Neon.tech
 
-### Prerequisites
+## Project Structure
 
-- Java 21
-- Node.js 18+
-- PostgreSQL
+The repository is organized into two main components:
 
-### Backend
+- `/frontend` - React/TypeScript application
+- `/backend` - Java Spring Boot API
 
-```bash
-cd backend
-# Set environment variables for database connection
-./mvnw spring-boot:run
-```
+## Documentation
 
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The application will be available at http://localhost:5173
-
-## Deployment
-
-### Backend (Docker)
-
-```bash
-cd backend
-docker build -t ems-backend .
-docker run -p 8080:8080 -e DATASOURCE_URL="..." -e DATASOURCE_USER="..." -e DATASOURCE_PASSWORD="..." -e FRONTEND_URL="..." ems-backend
-```
-
-### Backend (Render.com)
-
-1. Deploy as a Web Service using Docker
-2. Set required environment variables for database connection
-3. Connect to your PostgreSQL database on Neon.tech
-
-### Frontend (Render.com)
-
-1. Build command: `npm install; npm run build`
-2. Publish directory: `dist`
-3. Add rewrite rule: `/* → /index.html`
-
-### Database (Neon.tech)
-
-Configure permissions:
-```sql
-GRANT ALL ON SCHEMA public TO your_username;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO your_username;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO your_username;
-```
+For detailed documentation including deployment instructions and user guides, please refer to the documentation file included with this submission.
