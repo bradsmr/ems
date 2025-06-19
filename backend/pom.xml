@@ -14,7 +14,7 @@
 
     <groupId>dev.bradleysummers</groupId>
     <artifactId>ems</artifactId>
-    <version>1.0.0-RC1</version>
+    <version>1.0.1</version>
     <name>ems</name>
     <description>Employee Management System Spring Boot Backend</description>
 

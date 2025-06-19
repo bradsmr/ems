@@ -13,10 +13,12 @@ export default function Login({ onLogin }: Props) {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
 
     const submit = async (e: FormEvent) => {
         e.preventDefault()
         setError("")
+        setIsLoading(true)
         try {
             const res = await axios.post(`${API_URL}/api/auth/login`, {
                 email,
@@ -37,6 +39,21 @@ export default function Login({ onLogin }: Props) {
             } else {
                 setError("Network error. Please try again.")
             }
+        } finally {
+            setIsLoading(false)
+        }
+    }
+    
+    const handleGuestAccess = async () => {
+        setError("")
+        setIsLoading(true)
+        try {
+            const res = await axios.get(`${API_URL}/api/auth/guest-access`)
+            onLogin(res.data.token)
+        } catch (err) {
+            setError("Failed to access demo mode. Please try again.")
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -83,8 +100,33 @@ export default function Login({ onLogin }: Props) {
                             </div>
                         )}
 
-                        <Button type="submit" className="w-full">
-                            Login
+                        <Button 
+                            type="submit" 
+                            className="w-full" 
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "Loading..." : "Login"}
+                        </Button>
+                        
+                        <div className="mt-4 relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-gray-300" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-background px-2 text-muted-foreground">
+                                    Or
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <Button 
+                            type="button" 
+                            onClick={handleGuestAccess} 
+                            variant="outline" 
+                            className="w-full mt-4"
+                            disabled={isLoading}
+                        >
+                            Try Demo Mode
                         </Button>
                     </form>
                 </CardContent>

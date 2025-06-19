@@ -36,6 +36,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/setup/**").permitAll()
                         // Add specific security rules for department deletion
                         .requestMatchers("/api/departments/*/delete").hasRole("ADMIN")
+                        // POST/PUT/DELETE operations require ADMIN or EMPLOYEE role
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                        // GUEST can access GET endpoints (read-only)
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess
