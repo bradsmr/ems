@@ -2,8 +2,11 @@ package dev.bradleysummers.ems.service;
 
 import dev.bradleysummers.ems.dto.HierarchyNodeDto;
 import dev.bradleysummers.ems.entity.Employee;
+import dev.bradleysummers.ems.enums.Role;
 import dev.bradleysummers.ems.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,7 +22,18 @@ public class ReportService {
     private final EmployeeRepository employeeRepository;
 
     public List<HierarchyNodeDto> generateHierarchyReport(Long departmentId) {
-        List<Employee> allEmployees = employeeRepository.findAll();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Employee currentUser = employeeRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        List<Employee> allEmployees;
+
+        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.GUEST) {
+            allEmployees = employeeRepository.findAll();
+        } else {
+            allEmployees = List.of(currentUser);
+        }
+
         
         // Filter by department if specified
         if (departmentId != null) {

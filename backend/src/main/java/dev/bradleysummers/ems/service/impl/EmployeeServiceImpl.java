@@ -54,15 +54,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee currentUser = employeeRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
-        if (currentUser.getRole() == Role.ADMIN) {
+        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.GUEST) {
+            // Admins and Guests can view all employees
             return employeeRepository.findAll();
-        } else {
-            // Regular employees can only view themselves
-            return employeeRepository.findAll().stream()
-                    .filter(emp -> emp.equals(currentUser))
-                    .collect(Collectors.toList());
         }
+
+        // Employees can only see themselves
+        return List.of(currentUser);
     }
+
 
     @Override
     public Employee update(Long id, Employee updatedEmployee) {
