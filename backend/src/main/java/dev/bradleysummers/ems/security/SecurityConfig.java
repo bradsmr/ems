@@ -29,33 +29,36 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        // Public endpoints that don't require authentication
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/setup/**").permitAll()
-                        // Add specific security rules for department deletion
-                        .requestMatchers("/api/departments/*/delete").hasRole("ADMIN")
-                        // POST/PUT/DELETE operations require ADMIN or EMPLOYEE role
-                        // Special case for employee creation - allow ADMIN to create users with any role
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/employees")
-                        .hasRole("ADMIN")
-                        // Other POST operations require ADMIN or EMPLOYEE role
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/**")
-                        .hasAnyRole("ADMIN", "EMPLOYEE")
-                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/**")
-                        .hasAnyRole("ADMIN", "EMPLOYEE")
-                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/**")
-                        .hasAnyRole("ADMIN", "EMPLOYEE")
-                        // GUEST can access GET endpoints (read-only)
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(sess -> sess
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults())
+            .authorizeHttpRequests(auth -> auth
+                // Public endpoints
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/setup/**").permitAll()
+
+                // Only ADMIN can delete departments
+                .requestMatchers("/api/departments/*/delete").hasRole("ADMIN")
+
+                // Only ADMIN can create employees
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/employees").hasRole("ADMIN")
+
+                // Other POST, PUT, DELETE requests require ADMIN or EMPLOYEE
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/**").hasAnyRole("ADMIN", "EMPLOYEE")
+
+                // GET requests allowed for all authenticated roles including GUEST
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/**").hasAnyRole("ADMIN", "EMPLOYEE", "GUEST")
+
+                // Everything else requires authentication
+                .anyRequest().authenticated()
+            )
+
+            .sessionManagement(sess -> sess
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
