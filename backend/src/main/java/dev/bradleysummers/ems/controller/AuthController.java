@@ -66,5 +66,4 @@ public class AuthController {
         return EmployeeMapper.toDto(employee);
     }
     
-
 }
