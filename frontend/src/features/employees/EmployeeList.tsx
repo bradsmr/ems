@@ -76,6 +76,8 @@ const columns: ColumnDef<Employee>[] = [
                             <TooltipTrigger>
                                 {role === "ADMIN" ? (
                                     <Shield className="h-4 w-4 text-primary"/>
+                                ) : role === "GUEST" ? (
+                                    <User className="h-4 w-4 text-blue-400"/>
                                 ) : (
                                     <User className="h-4 w-4 text-muted-foreground"/>
                                 )}

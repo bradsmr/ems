@@ -665,6 +665,7 @@ export default function EmployeeDetails({ token }: Props) {
                                         <SelectContent>
                                             <SelectItem value="ADMIN">Admin</SelectItem>
                                             <SelectItem value="EMPLOYEE">Employee</SelectItem>
+                                            <SelectItem value="GUEST">Guest</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
