@@ -48,10 +48,17 @@ export default function Login({ onLogin }: Props) {
         setError("")
         setIsLoading(true)
         try {
-            const res = await axios.get(`${API_URL}/api/auth/guest-access`)
+            const res = await axios.post(`${API_URL}/api/auth/login`, {
+                email: "guest@demo.com",
+                password: "guest123"
+            })
             onLogin(res.data.token)
-        } catch (err) {
-            setError("Failed to access demo mode. Please try again.")
+        } catch (err: any) {
+            if (err.response && err.response.status === 401) {
+                setError("Guest account not found. Please contact your administrator.")
+            } else {
+                setError("Failed to access demo mode. Please try again.")
+            }
         } finally {
             setIsLoading(false)
         }

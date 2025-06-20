@@ -4,18 +4,15 @@ import dev.bradleysummers.ems.dto.auth.AuthRequest;
 import dev.bradleysummers.ems.dto.auth.AuthResponse;
 import dev.bradleysummers.ems.dto.EmployeeResponseDto;
 import dev.bradleysummers.ems.entity.Employee;
-import dev.bradleysummers.ems.enums.Role;
 import dev.bradleysummers.ems.mapper.EmployeeMapper;
 import dev.bradleysummers.ems.repository.EmployeeRepository;
 import dev.bradleysummers.ems.security.JwtService;
 import dev.bradleysummers.ems.security.LoginAttemptService;
-import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,7 +24,6 @@ public class AuthController {
     private final EmployeeRepository employeeRepository;
     private final JwtService jwtService;
     private final LoginAttemptService loginAttemptService;
-    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody AuthRequest request) {
@@ -39,7 +35,7 @@ public class AuthController {
             );
         }
         try {
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                     email,
                     request.getPassword()
@@ -70,30 +66,5 @@ public class AuthController {
         return EmployeeMapper.toDto(employee);
     }
     
-    @GetMapping("/guest-access")
-    public ResponseEntity<AuthResponse> createGuestAccess() {
-        // Check if a guest user already exists
-        String guestEmail = "guest@demo.com";
-        
-        Employee guestUser = employeeRepository.findByEmail(guestEmail)
-                .orElseGet(() -> {
-                    // Create a new guest user if one doesn't exist
-                    Employee guest = Employee.builder()
-                            .email(guestEmail)
-                            .password(passwordEncoder.encode("guest123")) // Using a fixed password since it's just a demo account
-                            .firstName("Guest")
-                            .lastName("User")
-                            .jobTitle("Demo User")
-                            .role(Role.GUEST)
-                            .active(true)
-                            .build();
-                    
-                    return employeeRepository.save(guest);
-                });
-        
-        // Generate JWT token for the guest user
-        String token = jwtService.generateToken(guestUser.getEmail());
-        
-        return ResponseEntity.ok(new AuthResponse(token));
-    }
+
 }
