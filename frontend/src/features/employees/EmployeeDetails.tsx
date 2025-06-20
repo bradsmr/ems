@@ -92,13 +92,13 @@ export default function EmployeeDetails({ token }: Props) {
     // Check if user has permission to view this employee
     const canView = () => {
         if (user?.role === 'ADMIN') return true;
-        if (user?.id === Number(id)) return true; // Self
-        if (user?.id === employee.managerId) return true; // Manager of this employee
-        if (employee.managerId === user?.id) return true; // This is user's manager
-        
-        // Same department check would go here if needed
+        if (user?.role === 'GUEST') return true;
+        if (user?.id === Number(id)) return true; // self
+        if (user?.id === employee.managerId) return true; // manager of employee
+        if (employee.managerId === user?.id) return true; // employee is user's manager
         return false;
     };
+    
     
     useEffect(() => {
         // Skip if no token or user, or if data has already been loaded
