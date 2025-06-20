@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react"
+import React, { useState, FormEvent } from "react"
 import axios from "axios"
 import { API_URL } from '../../utils/api';
 import { Input } from "@/components/ui/input"
@@ -48,10 +48,24 @@ export default function Login({ onLogin }: Props) {
         setError("")
         setIsLoading(true)
         try {
-            const res = await axios.get(`${API_URL}/api/auth/guest-access`)
+            // Use the regular login flow with demo user credentials
+            const res = await axios.post(`${API_URL}/api/auth/login`, {
+                email: "demo@initech.com",
+                password: "demo123"
+            })
             onLogin(res.data.token)
-        } catch (err) {
-            setError("Failed to access demo mode. Please try again.")
+        } catch (err: any) {
+            if (err.response) {
+                if (err.response.status === 401) {
+                    setError("Demo account not found or invalid credentials.")
+                } else if (err.response.status === 403) {
+                    setError("Demo account is inactive. Please contact your administrator.")
+                } else {
+                    setError("Failed to access demo mode. Please try again.")
+                }
+            } else {
+                setError("Network error. Please try again.")
+            }
         } finally {
             setIsLoading(false)
         }
