@@ -71,7 +71,7 @@ public class AuthController {
     }
     
     @GetMapping("/guest-access")
-    public ResponseEntity<AuthResponse> createGuestAccess() {
+    public AuthResponse createGuestAccess() {
         // Check if a guest user already exists
         String guestEmail = "guest@demo.com";
         
@@ -94,6 +94,6 @@ public class AuthController {
         // Generate JWT token for the guest user
         String token = jwtService.generateToken(guestUser.getEmail());
         
-        return ResponseEntity.ok(new AuthResponse(token));
+        return new AuthResponse(token);
     }
 }
