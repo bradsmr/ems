@@ -1,18 +1,18 @@
 package dev.bradleysummers.ems.service.impl;
 
-import dev.bradleysummers.ems.entity.Employee;
-import dev.bradleysummers.ems.enums.Role;
-import dev.bradleysummers.ems.repository.EmployeeRepository;
-import dev.bradleysummers.ems.service.EmployeeService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import dev.bradleysummers.ems.entity.Employee;
+import dev.bradleysummers.ems.enums.Role;
+import dev.bradleysummers.ems.repository.EmployeeRepository;
+import dev.bradleysummers.ems.service.EmployeeService;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -33,20 +33,21 @@ public class EmployeeServiceImpl implements EmployeeService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Employee currentUser = employeeRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
-        
-        // Admin can view any employee
-        if (currentUser.getRole() == Role.ADMIN) {
+
+        // Admins and Guests can view any employee
+        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.GUEST) {
             return employeeRepository.findById(id);
         }
-        
-        // Users can view themselves
+
+        // Employees can view themselves
         if (currentUser.getId().equals(id)) {
             return employeeRepository.findById(id);
         }
-        
-        // Access denied - return empty
+
+        // Access denied
         return Optional.empty();
     }
+
 
     @Override
     public List<Employee> findAll() {
