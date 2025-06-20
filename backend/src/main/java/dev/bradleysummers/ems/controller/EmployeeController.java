@@ -64,16 +64,22 @@ public class EmployeeController {
     }
 
     @PostMapping
-    public ResponseEntity<EmployeeResponseDto> createEmployee(@RequestBody EmployeeRequestDto dto) {
-        Department department = departmentService.findById(dto.getDepartmentId());
-        Employee manager = dto.getManagerId() != null
-                ? employeeService.findById(dto.getManagerId()).orElse(null)
-                : null;
+    public ResponseEntity<?> createEmployee(@RequestBody EmployeeRequestDto dto) {
+        try {
+            Department department = departmentService.findById(dto.getDepartmentId());
+            Employee manager = dto.getManagerId() != null
+                    ? employeeService.findById(dto.getManagerId()).orElse(null)
+                    : null;
 
-        Employee employee = EmployeeMapper.toEntity(dto, department, manager);
-        Employee saved = employeeService.create(employee);
-        return ResponseEntity.ok(EmployeeMapper.toDto(saved));
+            Employee employee = EmployeeMapper.toEntity(dto, department, manager);
+            Employee saved = employeeService.create(employee);
+            return ResponseEntity.ok(EmployeeMapper.toDto(saved));
+        } catch (Exception e) {
+            e.printStackTrace(); // This will show the REAL cause in the logs
+            return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
+        }
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeResponseDto> updateEmployee(
