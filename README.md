@@ -6,10 +6,6 @@ A full-stack web application for managing employees and departments with role-ba
 
 [https://ems.bradleysummers.dev](https://ems.bradleysummers.dev)
 
-**Evaluation Credentials**:
-- Email: `wgu-evalation@example.com`
-- Password: `IMik-=qsH4BE^6!#M=^-`
-
 ![Initech EMS Dashboard](screenshots/dashboard.png)
 
 ## Overview

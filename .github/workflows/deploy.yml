@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  IMAGE_NAME: bradleysummers/ems
+  IMAGE_NAME: bradsmr/ems-backend
 
 jobs:
   backend:
