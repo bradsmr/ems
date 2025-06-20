@@ -75,7 +75,7 @@ public class EmployeeController {
             Employee saved = employeeService.create(employee);
             return ResponseEntity.ok(EmployeeMapper.toDto(saved));
         } catch (Exception e) {
-            e.printStackTrace(); // This will show the REAL cause in the logs
+            e.printStackTrace();
             return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
         }
     }
