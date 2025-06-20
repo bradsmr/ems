@@ -14,7 +14,7 @@ FROM amazoncorretto:21
 
 WORKDIR /app
 
-COPY --from=build /app/target/ems-1.0.1.jar /app/ems.jar
+COPY --from=build /app/target/*.jar /app/ems.jar
 
 EXPOSE 8080
 
