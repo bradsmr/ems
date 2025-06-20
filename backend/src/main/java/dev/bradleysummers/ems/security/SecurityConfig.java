@@ -38,6 +38,10 @@ public class SecurityConfig {
                         // Add specific security rules for department deletion
                         .requestMatchers("/api/departments/*/delete").hasRole("ADMIN")
                         // POST/PUT/DELETE operations require ADMIN or EMPLOYEE role
+                        // Special case for employee creation - allow ADMIN to create users with any role
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/employees")
+                        .hasRole("ADMIN")
+                        // Other POST operations require ADMIN or EMPLOYEE role
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/**")
                         .hasAnyRole("ADMIN", "EMPLOYEE")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/**")
