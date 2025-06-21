@@ -14,6 +14,7 @@ The Employee Management System (EMS) is designed to help organizations manage th
 
 - **Administrators** can manage all employees and departments
 - **Employees** can view their own information and organizational structure
+- **Guests** have global read-only permissions for demo purposes
 
 ## Key Features
 
@@ -38,7 +39,3 @@ The repository is organized into two main components:
 
 - `/frontend` - React/TypeScript application
 - `/backend` - Java Spring Boot API
-
-## Documentation
-
-For detailed documentation including deployment instructions and user guides, please refer to the documentation file included with this submission.
