@@ -1,6 +1,6 @@
-# Initech Employee Management System (EMS)
+# Employee Management System (EMS)
 
-A full-stack web application for managing employees and departments with role-based access control.
+A demo full-stack web application built with Java Spring Boot, React, and PostgreSQL, showcasing employee and department management features with role-based access control.
 
 ## Live Demo
 
